@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventKu - Versi HTML/JS</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        /* Terapkan font default */
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        /* Kelas utilitas untuk menyembunyikan halaman */
+        .page {
+            display: none; /* Sembunyi secara default */
+            width: 100%;
+            height: 100vh;
+            overflow-y: auto;
+            flex-direction: column;
+        }
+        /* Tampilkan halaman yang aktif */
+        .page.active {
+            display: flex; 
+        }
+        
+        /* Loading spinner sederhana */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen overflow-hidden">
+
+    <!-- 1. Halaman Loading -->
+    <div id="loading-page" class="page active items-center justify-center bg-gray-100">
+        <div class="spinner"></div>
+        <p class="ml-4 text-lg text-gray-700">Memuat...</p>
+    </div>
+
+    <!-- 2. Halaman Login -->
+    <div id="login-page" class="page items-center justify-center bg-gray-100 p-6">
+        <div class="w-full max-w-xs text-center">
+            <h1 class="text-3xl font-bold text-blue-600 mb-4">EventKu</h1>
+            <p class="text-gray-600 mb-8 font-semibold">Masuk dengan Nomor WA</p>
+            <form id="login-form" class="w-full">
+                <div class="mb-4">
+                    <label for="login-phone" class="sr-only">Nomor WA</label>
+                    <input type="tel" id="login-phone" placeholder="Masukan Nomor WA (Contoh: 08123456789)"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <p id="login-error" class="text-red-500 text-sm mb-4 hidden"></p>
+                <button id="login-button" type="submit"
+                    class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-700 transition duration-300 disabled:bg-gray-400">
+                    Lanjutkan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. Halaman Registrasi -->
+    <div id="register-page" class="page items-center justify-center bg-gray-100 p-6">
+        <div class="w-full max-w-sm text-center">
+            <h1 class="text-3xl font-bold text-blue-600 mb-4">Daftar Akun</h1>
+            <p class="text-gray-600 mb-8">Isi data diri Anda</p>
+            <form id="register-form" class="w-full text-left space-y-4">
+                <div>
+                    <label for="register-name" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                    <input type="text" name="name" id="register-name" required
+                        class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label for="register-phone" class="block text-sm font-medium text-gray-700">Nomor WA (untuk Login)</label>
+                    <input type="tel" name="phoneNumber" id="register-phone" required
+                        class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label for="register-kecamatan" class="block text-sm font-medium text-gray-700">Kecamatan</label>
+                    <select name="kecamatan" id="register-kecamatan" required
+                        class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Pilih Kecamatan</option>
+                        <option value="Ujungberung">Ujungberung</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div id="other-kecamatan-wrapper" class="hidden">
+                    <label for="register-other-kecamatan" class="block text-sm font-medium text-gray-700">Kecamatan (Lainnya)</label>
+                    <input type="text" name="otherKecamatan" id="register-other-kecamatan"
+                        class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label for="register-kelurahan" class="block text-sm font-medium text-gray-700">Kelurahan</label>
+                    <select name="kelurahan" id="register-kelurahan" required
+                        class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Pilih Kelurahan</option>
+                        <option value="Pasirendah">Pasirendah</option>
+                        <option value="Cigending">Cigending</option>
+                        <option value="Pasirwangi">Pasirwangi</option>
+                        <option value="Pasirjati">Pasirjati</option>
+                        <option value="Pasanggrahan">Pasanggrahan</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div id="other-kelurahan-wrapper" class="hidden">
+                    <label for="register-other-kelurahan" class="block text-sm font-medium text-gray-700">Kelurahan (Lainnya)</label>
+                    <input type="text" name="otherKelurahan" id="register-other-kelurahan"
+                        class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <p id="register-error" class="text-red-500 text-sm text-center hidden"></p>
+                <button id="register-button" type="submit"
+                    class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-700 transition duration-300 disabled:bg-gray-400">
+                    Daftar
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 4. Halaman Aplikasi Utama (Member) -->
+    <div id="main-app-page" class="page bg-gray-50 mx-auto max-w-lg shadow-lg">
+        <!-- Header Aplikasi Member -->
+        <header class="bg-white p-4 shadow-md w-full flex-shrink-0">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-bold text-blue-600">EventKu</h1>
+
+                <!-- Wrapper untuk tombol di header kanan -->
+                <div class="flex items-center space-x-3">
+                    <!-- Tombol Admin (Hidden by default) -->
+                    <button id="admin-nav-button" title="Panel Admin" class="hidden p-1 rounded-full text-gray-600 hover:bg-gray-200 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.096 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+
+                    <!-- Tombol Profil (Yang sudah ada) -->
+                    <div id="profile-button" class="flex items-center space-x-2 cursor-pointer">
+                        <span id="header-username" class="text-gray-700 font-medium">Hi, User</span>
+                        <div id="header-avatar" class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                            U
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- Konten Aplikasi Member (Daftar, Detail, Profil) -->
+        <main id="main-content" class="flex-1 overflow-y-auto p-4">
+            <!-- Konten dinamis akan di-render di sini -->
+        </main>
+    </div>
+
+    <!-- 5. Halaman Panel Admin -->
+    <div id="admin-panel-page" class="page bg-gray-50 mx-auto max-w-lg shadow-lg">
+        <!-- Header Aplikasi Admin -->
+        <header class="bg-red-600 text-white p-4 shadow-md w-full flex-shrink-0">
+        <div class="flex justify-between items-center">
+
+        <!-- Grup Kiri: Tombol Kembali + Judul -->
+        <div class="flex items-center space-x-2">
+            <button id="admin-back-to-member-button" title="Kembali ke Halaman Member" class="focus:outline-none p-1 rounded-full hover:bg-red-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <h1 class="text-xl font-bold">Panel Admin - EventKu</h1>
+        </div>
+
+        <!-- Grup Kanan: Profil & Logout (Tetap sama) -->
+        <div class="flex items-center space-x-4">
+            <span id="admin-header-username" class="font-medium">Admin</span>
+                    <button id="admin-logout-button" title="Logout"
+                        class="focus:outline-none p-1 rounded-full hover:bg-red-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Konten Aplikasi Admin (Daftar Event, Tambah Event) -->
+        <main id="admin-content" class="flex-1 overflow-y-auto p-4">
+            <!-- Konten dinamis admin akan di-render di sini -->
+        </main>
+    </div>
+
+
+    <!-- =================================================================== -->
+    <!-- SCRIPT UTAMA APLIKASI (JAVASCRIPT MURNI) -->
+    <!-- =================================================================== -->
+    <script type="module">
+        import QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm';
+        // Import Supabase client dari CDN ESM (Cara modern dan stabil)
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        // --- Konfigurasi Supabase ---
+        const SUPABASE_URL = 'https://qupxxrvpeuvfmmgrmxsa.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1cHh4cnZwZXV2Zm1tZ3JteHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNDE1OTUsImV4cCI6MjA3NzcxNzU5NX0.Qt2zjBin5hh2_3BNRZ0x3iPBMp01M1ZgtTaFdt08yFw';
+        
+        // Inisialisasi Supabase Client
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- Variabel State Global (Pengganti React.useState) ---
+        let userProfile = null; // Menyimpan data profil pengguna setelah login
+
+        // --- Selektor DOM (Ambil semua elemen penting) ---
+        const allPages = document.querySelectorAll('.page');
+        const loadingPage = document.getElementById('loading-page');
+        const loginPage = document.getElementById('login-page');
+        const registerPage = document.getElementById('register-page');
+        const mainAppPage = document.getElementById('main-app-page');
+        const adminPanelPage = document.getElementById('admin-panel-page');
+
+        // Form Login
+        const loginForm = document.getElementById('login-form');
+        const loginPhoneInput = document.getElementById('login-phone');
+        const loginError = document.getElementById('login-error');
+        const loginButton = document.getElementById('login-button');
+
+        // Form Registrasi
+        const registerForm = document.getElementById('register-form');
+        const registerNameInput = document.getElementById('register-name');
+        const registerPhoneInput = document.getElementById('register-phone');
+        const registerKecamatanSelect = document.getElementById('register-kecamatan');
+        const otherKecamatanWrapper = document.getElementById('other-kecamatan-wrapper');
+        const registerOtherKecamatanInput = document.getElementById('register-other-kecamatan');
+        const registerKelurahanSelect = document.getElementById('register-kelurahan');
+        const otherKelurahanWrapper = document.getElementById('other-kelurahan-wrapper');
+        const registerOtherKelurahanInput = document.getElementById('register-other-kelurahan');
+        const registerError = document.getElementById('register-error');
+        const registerButton = document.getElementById('register-button');
+
+        // Halaman Utama (Member)
+        const mainHeaderUsername = document.getElementById('header-username');
+        const mainHeaderAvatar = document.getElementById('header-avatar');
+        const mainContent = document.getElementById('main-content');
+        const profileButton = document.getElementById('profile-button');
+
+        // Halaman Admin
+        const adminHeaderUsername = document.getElementById('admin-header-username');
+        const adminLogoutButton = document.getElementById('admin-logout-button');
+        const adminContent = document.getElementById('admin-content');
+        let html5QrCode = null;
+
+        // --- Fungsi Utilitas ---
+
+        /**
+         * Menampilkan halaman berdasarkan ID dan menyembunyikan yang lain
+         * (Pengganti React Router / Navigasi State)
+         * @param {string} pageId - ID dari elemen div halaman (e.g., 'login-page')
+         */
+        function showPage(pageId) {
+            allPages.forEach(page => {
+                if (page.id === pageId) {
+                    page.classList.add('active');
+                } else {
+                    page.classList.remove('active');
+                }
+            });
+        }
+        
+        /**
+         * Menampilkan pesan error pada form
+         * @param {HTMLElement} errorElement - Elemen <p> for error
+         * @param {string} message - Pesan error
+         */
+        function showError(errorElement, message) {
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
+
+        /**
+         * Menyembunyikan pesan error
+         * @param {HTMLElement} errorElement 
+         */
+        function clearError(errorElement) {
+            errorElement.textContent = '';
+            errorElement.classList.add('hidden');
+        }
+
+        /**
+         * Mengatur status loading tombol
+         * @param {HTMLButtonElement} button 
+         * @param {boolean} isLoading 
+         * @param {string} defaultText 
+         */
+        function setButtonLoading(button, isLoading, defaultText = 'Submit') {
+            if (isLoading) {
+                button.disabled = true;
+                button.innerHTML = '<div class="spinner mx-auto" style="width: 20px; height: 20px; border-left-color: white;"></div>';
+            } else {
+                button.disabled = false;
+                button.innerHTML = defaultText;
+            }
+        }
+        
+        // --- Fungsi Autentikasi ---
+
+        /**
+         * Menangani submit form login
+         */
+        async function handleLogin(e) {
+            e.preventDefault();
+            const phone = loginPhoneInput.value;
+
+            if (phone.length < 9) {
+                showError(loginError, "Nomor WA tidak valid. Minimal 9 angka.");
+                return;
+            }
+            
+            setButtonLoading(loginButton, true, 'Lanjutkan');
+            clearError(loginError);
+
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('phone_number', phone)
+                    .limit(1);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    // Sukses Login: User ditemukan
+                    handleLoginSuccess(data[0]);
+                } else {
+                    // User tidak ditemukan: Arahkan ke registrasi
+                    registerPhoneInput.value = phone; // Isi nomor WA di form registrasi
+                    showPage('register-page');
+                }
+            } catch (err) {
+                console.error("Error login:", err);
+                showError(loginError, "Gagal memeriksa nomor WA. Coba lagi.");
+            } finally {
+                setButtonLoading(loginButton, false, 'Lanjutkan');
+            }
+        }
+
+        /**
+         * Menangani submit form registrasi
+         */
+        async function handleRegister(e) {
+            e.preventDefault();
+            setButtonLoading(registerButton, true, 'Daftar');
+            clearError(registerError);
+
+            const name = registerNameInput.value;
+            const phoneNumber = registerPhoneInput.value;
+            const kecamatan = registerKecamatanSelect.value;
+            const kelurahan = registerKelurahanSelect.value;
+            const otherKecamatan = registerOtherKecamatanInput.value;
+            const otherKelurahan = registerOtherKelurahanInput.value;
+
+            const finalKecamatan = kecamatan === 'Lainnya' ? otherKecamatan : kecamatan;
+            const finalKelurahan = kelurahan === 'Lainnya' ? otherKelurahan : kelurahan;
+
+            if (!name || !phoneNumber || !finalKecamatan || !finalKelurahan) {
+                showError(registerError, "Semua field wajib diisi.");
+                setButtonLoading(registerButton, false, 'Daftar');
+                return;
+            }
+
+            const newUserId = crypto.randomUUID();
+            const profileData = {
+                user_id: newUserId,
+                name: name,
+                phone_number: phoneNumber,
+                kecamatan: finalKecamatan,
+                kelurahan: finalKelurahan,
+                created_at: new Date().toISOString(),
+                // 'role' akan menggunakan nilai default 'member' di Supabase
+            };
+
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .insert([profileData])
+                    .select();
+
+                if (error) {
+                    if (error.code === '23505') { // Unique violation
+                        showError(registerError, "Nomor WA sudah terdaftar. Silakan kembali ke Login.");
+                    } else {
+                        throw error;
+                    }
+                } else if (data && data.length > 0) {
+                    // Sukses Registrasi
+                    handleLoginSuccess(data[0]);
+                }
+            } catch (err) {
+                console.error("Error register:", err);
+                showError(registerError, "Gagal menyimpan profil. Coba lagi.");
+            } finally {
+                setButtonLoading(registerButton, false, 'Daftar');
+            }
+        }
+
+        /**
+         * Dipanggil setelah login atau registrasi sukses
+         */
+        function handleLoginSuccess(profile) {
+            userProfile = profile; // Simpan profil ke state global
+
+            // --- Tampilan Member (Default untuk SEMUA) ---
+            const firstName = userProfile.name.split(' ')[0] || 'User';
+            mainHeaderUsername.textContent = `Hi, ${firstName}`;
+            mainHeaderAvatar.textContent = firstName.charAt(0);
+
+            // Cek Role untuk tombol admin
+            const adminNavButton = document.getElementById('admin-nav-button');
+            if (userProfile.role === 'admin') {
+                adminNavButton.classList.remove('hidden'); // Tampilkan tombol admin
+
+                // Siapkan juga header di panel admin jika mereka pindah nanti
+                adminHeaderUsername.textContent = firstName;
+            } else {
+                adminNavButton.classList.add('hidden'); // Pastikan tersembunyi
+            }
+
+            showEventList(); // Muat daftar event member
+            showPage('main-app-page'); // Tampilkan halaman aplikasi utama
+        }
+        
+        /**
+         * Menangani Logout
+         */
+        function handleLogout() {
+            userProfile = null; // Hapus state global
+            loginPhoneInput.value = ''; // Bersihkan form login
+            clearError(loginError);
+            showPage('login-page'); // Kembali ke halaman login
+        }
+        
+        // --- Logika Halaman Registrasi (Tampilkan/Sembunyikan "Lainnya") ---
+        registerKecamatanSelect.addEventListener('change', () => {
+            otherKecamatanWrapper.classList.toggle('hidden', registerKecamatanSelect.value !== 'Lainnya');
+        });
+        registerKelurahanSelect.addEventListener('change', () => {
+            otherKelurahanWrapper.classList.toggle('hidden', registerKelurahanSelect.value !== 'Lainnya');
+        });
+
+        
+        // ======================================================
+        // --- LOGIKA APLIKASI MEMBER (PENGGANTI MainApp) ---
+        // ======================================================
+
+        /**
+         * Menampilkan daftar event (Halaman utama Member)
+         * (Pengganti komponen EventList)
+         */
+        async function showEventList() {
+            mainContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            
+            try {
+                // 1. Ambil status registrasi & check-in untuk user ini
+                const { data: registrations, error: regError } = await supabase
+                    .from('registrations')
+                    .select('event_id, check_in') // Hanya ambil kolom yang perlu
+                    .eq('user_id', userProfile.user_id);
+
+                if (regError) throw regError;
+
+                // Buat Map agar pencarian cepat (Key: event_id, Value: status check_in)
+                const registrationStatusMap = new Map();
+                if (registrations) {
+                    registrations.forEach(reg => {
+                        registrationStatusMap.set(reg.event_id, reg.check_in);
+                    });
+                }
+
+                // 2. Ambil semua event (kode ini sudah ada)
+                
+                const { data, error } = await supabase.from('events').select('*');
+                if (error) throw error;
+                
+                if (data.length === 0) {
+                    mainContent.innerHTML = `
+                        <h2 class="text-2xl font-bold text-gray-800">Daftar Event</h2>
+                        <div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg mt-4">
+                           Saat ini belum ada event yang tersedia.
+                        </div>`;
+                    return;
+                }
+                
+                // Buat HTML untuk setiap event card
+                const eventCardsHTML = data.map(event => {
+                // ▼▼▼ Cek status event ini ▼▼▼
+                const status = registrationStatusMap.get(event.id);
+                const hasAttended = status === 'Hadir';
+                // ▲▲▲ Batas Pengecekan ▲▲▲
+
+                // Kita return string HTML
+                return `
+                    <div
+                    class="event-card bg-white rounded-lg shadow-md border border-gray-200 cursor-pointer hover:shadow-lg transition overflow-hidden"
+                    data-id="${event.id}"
+                    >
+                    <!-- ▼▼▼ TAMBAHKAN DIV WRAPPER 'relative' DI SINI ▼▼▼ -->
+                    <div class="relative">
+                        <!-- 1. Gambar Event (jika ada) -->
+                        ${event.image_url ? 
+                        `<img 
+                            src="${event.image_url}" 
+                            alt="${event.title}" 
+                            class="w-full h-36 object-cover pointer-events-none" 
+                            onerror="this.style.display='none'"
+                        >` 
+                        : 
+                        ''
+                        }
+
+                        <!-- 2. Overlay 'Hadir' (Hanya jika hasAttended) -->
+                        ${hasAttended ? `
+                            <div class="absolute inset-0 bg-green-600 bg-opacity-70 flex items-center justify-center pointer-events-none">
+                                <span class="text-white text-xl font-bold tracking-wide">Hadir</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <!-- ▲▲▲ BATAS DIV WRAPPER 'relative' ▲▲▲ -->
+
+                    <!-- 3. Konten Teks (Sama seperti sebelumnya) -->
+                    <div class="p-4 pointer-events-none">
+                        <h3 class="text-lg font-semibold text-blue-700">${event.title}</h3>
+                        <p class="text-sm text-gray-500 mb-2">${event.date} - ${event.location}</p>
+
+                        <p class="text-gray-700 text-sm line-clamp-2 mb-2">
+                        ${event.description}
+                        </p>
+
+                        <p class="text-sm font-medium text-blue-600">
+                        &gt;&gt; Selengkapnya...
+                        </p>
+                    </div>
+                    </div>
+                    `;
+                }).join('');
+                
+                mainContent.innerHTML = `
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Daftar Event</h2>
+                    <div class="space-y-4">
+                        ${eventCardsHTML}
+                    </div>`;
+
+            } catch (err) {
+                console.error("Error fetching events:", err);
+                mainContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat event.</p>';
+            }
+        }
+
+        /**
+         * Menampilkan detail satu event
+         * (Pengganti komponen EventDetail)
+         * @param {string} eventId - ID event yang diklik
+         */
+        async function showEventDetail(eventId) {
+            mainContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            
+            let event = null;
+            let isRegistered = false;
+
+            try {
+                // 1. Ambil detail event
+                const { data: eventData, error: eventError } = await supabase
+                    .from('events')
+                    .select('*')
+                    .eq('id', eventId)
+                    .single();
+                if (eventError) throw eventError;
+                event = eventData;
+
+                // 2. Cek status registrasi user
+                const { data: regData, error: regError } = await supabase
+                    .from('registrations')
+                    .select('id')
+                    .eq('event_id', eventId)
+                    .eq('user_id', userProfile.user_id)
+                    .limit(1);
+                if (regError) throw regError;
+                
+                isRegistered = regData.length > 0;
+                
+                // 3. Render HTML
+                // (image_url, google_map_link, materials_link ditambahkan)
+                mainContent.innerHTML = `
+                    <button id="detail-back-button" class="text-blue-600 mb-4 font-medium flex items-center hover:text-blue-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        Kembali ke Daftar Event
+                    </button>
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                        ${event.image_url ? `<img src="${event.image_url}" alt="${event.title}" class="w-full h-48 object-cover" onerror="this.style.display='none'">` : ''}
+                        
+                        <div class="flex p-4 space-x-2">
+                            <!-- Tombol Daftar (Lebar 2/3 atau Penuh jika materi tidak ada) -->
+                            <button
+                                id="register-event-button"
+                                ${isRegistered ? 'disabled' : ''}
+                                class="${event.materials_link ? 'w-2/3' : 'w-full'} ${isRegistered ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'} text-white py-3 rounded-lg font-semibold shadow-lg transition duration-300 disabled:bg-gray-400 disabled:opacity-70"
+                            >
+                                ${isRegistered ? 'Anda Sudah Terdaftar' : 'Daftar Event Ini'}
+                            </button>
+                            
+                            <!-- Tombol Materi (Lebar 1/3, jika ada) -->
+                            ${event.materials_link ? 
+                                `<a 
+                                    href="${event.materials_link}" 
+                                    target="_blank" rel="noopener noreferrer" 
+                                    class="w-1/3 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold shadow-lg transition duration-300 text-center flex items-center justify-center"
+                                >
+                                    Materi
+                                </a>` 
+                                : 
+                                ''
+                            }
+                        </div>
+                        
+                        <div class="p-6">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-3">${event.title}</h1>
+                            <p class="text-gray-600 text-lg mb-2"><span class="font-semibold">Tanggal:</span> ${event.date}</p>
+                            <p class="text-gray-600 text-lg mb-4"><span class="font-semibold">Lokasi:</span> ${event.location}</p>
+                            
+                            ${event.google_map_link ? `<a href="${event.google_map_link}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline mb-4 inline-block">Lihat Peta Google</a>` : ''}
+                            
+                            <p class="text-gray-700 mb-6">${event.description}</p>
+
+                            <div class="mt-6">
+                                <p id="register-event-status" class="text-center mt-3"></p>
+                            </div>
+                        </div>
+                    </div>`;
+
+            } catch (err) {
+                 console.error("Error fetching event detail:", err);
+                mainContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat detail event.</p>';
+            }
+        }
+        
+        /**
+         * Menangani pendaftaran event
+         * @param {string} eventId 
+         */
+        async function handleEventRegistration(eventId) {
+            const button = document.getElementById('register-event-button');
+            const status = document.getElementById('register-event-status');
+            
+            setButtonLoading(button, true);
+            status.textContent = '';
+            
+            try {
+                const event = (await supabase.from('events').select('id, title').eq('id', eventId).single()).data;
+                
+                const registrationData = {
+                    event_id: event.id,
+                    event_title: event.title,
+                    user_id: userProfile.user_id,
+                    name: userProfile.name,
+                    phone_number: userProfile.phone_number,
+                    registered_at: new Date().toISOString(),
+                };
+                
+                const { error } = await supabase
+                    .from('registrations')
+                    .insert([registrationData]);
+                
+                if (error) throw error;
+                
+                // Sukses
+                setButtonLoading(button, true); // Tetap loading
+                button.disabled = true;
+                button.textContent = 'Anda Sudah Terdaftar';
+                button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                button.classList.add('bg-green-600', 'disabled:opacity-100');
+                status.textContent = 'Pendaftaran berhasil!';
+                status.classList.add('text-green-600');
+                
+            } catch(err) {
+                console.error("Error registering:", err);
+                status.textContent = 'Gagal mendaftar. Coba lagi.';
+                status.classList.add('text-red-500');
+                setButtonLoading(button, false, 'Daftar Event Ini');
+            }
+        }
+
+        /**
+         * Menampilkan halaman profil pengguna
+         * (Pengganti komponen ProfilePage)
+         */
+        function showProfilePage() {
+            mainContent.innerHTML = `
+                <button id="profile-back-button" class="text-blue-600 mb-4 font-medium flex items-center hover:text-blue-800 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    Kembali
+                </button>
+                
+                <div class="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
+                    <div class="flex flex-col items-center mb-6">
+                        <div class="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center text-white text-4xl font-bold mb-4">
+                            ${userProfile.name ? userProfile.name.charAt(0) : 'U'}
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800">${userProfile.name}</h2>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 font-medium">Nomor WA:</span>
+                            <span class="text-gray-800">${userProfile.phone_number}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 font-medium">Kecamatan:</span>
+                            <span class="text-gray-800">${userProfile.kecamatan}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 font-medium">Kelurahan:</span>
+                            <span class="text-gray-800">${userProfile.kelurahan}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col items-center mt-8 border-t border-gray-200 pt-6">
+                    <p class="text-sm font-medium text-gray-600 mb-3">ID Peserta Anda</p>
+                    <!-- Container untuk QR Code -->
+                    <div id="qr-code-container" class="p-2 bg-white border rounded-lg shadow-inner">
+                        <!-- QR Code akan di-generate di sini oleh JavaScript -->
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">${userProfile.user_id}</p>
+                    </div>
+
+                    <button id="profile-logout-button"
+                        class="w-full bg-red-500 text-white py-3 rounded-lg font-semibold shadow-lg hover:bg-red-600 transition duration-300 mt-8"
+                    >
+                        Logout
+                    </button>
+                </div>
+            `;
+        }
+
+        // --- Event Listener Navigasi Member ---        
+        // --- Versi Perbaikan showEventDetail ---
+        async function showEventDetail_v2(eventId) {
+            mainContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            
+            try {
+                // 1. Ambil detail
+                const { data: event, error: eventError } = await supabase.from('events').select('*').eq('id', eventId).single();
+                if (eventError) throw eventError;
+
+                // 2. Cek registrasi
+                const { data: regData, error: regError } = await supabase.from('registrations').select('id').eq('event_id', eventId).eq('user_id', userProfile.user_id).limit(1);
+                if (regError) throw regError;
+                const isRegistered = regData.length > 0;
+
+                // --- Logika Pengecekan Tanggal ---
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Set ke awal hari untuk perbandingan
+
+                // Parse 'YYYY-MM-DD' secara manual untuk menghindari masalah timezone
+                const dateParts = event.date.split('-');
+                const eventDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+                eventDate.setHours(0, 0, 0, 0); // Normalisasi tanggal event
+
+                const isEventOver = eventDate < today;
+                
+                // 3. Render HTML
+                mainContent.innerHTML = `
+                    <button id="detail-back-button" class="text-blue-600 mb-4 font-medium flex items-center hover:text-blue-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        Kembali ke Daftar Event
+                    </button>
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                        ${event.image_url ? `<img src="${event.image_url}" alt="${event.title}" class="w-full h-48 object-cover" onerror="this.style.display='none'">` : ''}
+                        
+                        <div class="flex p-4 space-x-2">
+                            <!-- Tombol Daftar (Lebar 2/3 atau Penuh jika materi tidak ada) -->
+                            <button
+                                id="register-event-button"
+                                ${isRegistered || isEventOver ? 'disabled' : ''}
+                                class="${event.materials_link ? 'w-2/3' : 'w-full'} 
+                                       ${isEventOver ? 'bg-gray-500' : (isRegistered ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700')} 
+                                       text-white py-3 rounded-lg font-semibold shadow-lg transition duration-300 disabled:bg-gray-400 disabled:opacity-70"
+                            >
+                                ${isEventOver ? 'Kegiatan Berakhir' : (isRegistered ? 'Anda Sudah Terdaftar' : 'Daftar Event Ini')}
+                            </button>
+                            
+                            <!-- Tombol Materi (Lebar 1/3, jika ada) -->
+                            ${event.materials_link ? 
+                                `<a 
+                                    href="${event.materials_link}" 
+                                    target="_blank" rel="noopener noreferrer" 
+                                    class="w-1/3 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold shadow-lg transition duration-300 text-center flex items-center justify-center"
+                                >
+                                    Materi
+                                </a>` 
+                                : 
+                                ''
+                            }
+                        </div>
+                        
+                        <div class="p-6">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-3">${event.title}</h1>
+                            <p class="text-gray-600 text-lg mb-2"><span class="font-semibold">Tanggal:</span> ${event.date}</p>
+                            <p class="text-gray-600 text-lg mb-4"><span class="font-semibold">Lokasi:</span> ${event.location}</p>
+                            
+                            ${event.google_map_link ? `<a href="${event.google_map_link}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline mb-4 inline-block">Lihat Peta Google</a>` : ''}
+                            
+                            <p class="text-gray-700 mb-6">${event.description}</p>
+
+                            <div class="mt-6">
+                                <p id="register-event-status" class="text-center mt-3"></p>
+                            </div>
+                        </div>
+                    </div>`;
+
+                // 4. Tambahkan event listener SECARA DINAMIS
+                document.getElementById('detail-back-button').addEventListener('click', showEventList);
+                
+                const registerBtn = document.getElementById('register-event-button');
+                if (!isRegistered && !isEventOver) { // <-- Perubahan di sini
+                    registerBtn.addEventListener('click', () => handleEventRegistration(eventId));
+                }
+                
+            } catch (err) {
+                 console.error("Error fetching event detail:", err);
+                mainContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat detail event.</p>';
+            }
+        }
+        
+        // Ganti pemanggil showEventDetail di event listener
+        // HAPUS BLOK LISTENER KEDUA YANG LAMA (Baris ~668 hingga ~679)
+        /*
+        mainContent.addEventListener('click', (e) => {
+            const eventCard = e.target.closest('.event-card');
+            if (eventCard) {
+                showEventDetail_v2(eventCard.dataset.id); // Panggil versi v2
+                return;
+            }
+            if (e.target.closest('#profile-logout-button')) {
+                handleLogout();
+                return;
+            }
+        });
+        */
+
+        // TAMBAHKAN SATU BLOK LISTENER YANG BERSIH INI
+        // Event listener ini HANYA menangani navigasi dari daftar ke detail
+        mainContent.addEventListener('click', (e) => {
+            const eventCard = e.target.closest('.event-card');
+            if (eventCard) {
+                showEventDetail_v2(eventCard.dataset.id); // Panggil versi v2
+                return;
+            }
+        });
+        
+        // Ganti pemanggil di showProfilePage juga
+            async function showProfilePage_v2() { // <-- 1. Tambahkan 'async'
+                showProfilePage(); // Panggil fungsi render
+
+                try {
+                    const qrContainer = document.getElementById('qr-code-container');
+                    if (qrContainer && userProfile && userProfile.user_id) {
+
+                        qrContainer.innerHTML = ''; // Bersihkan container
+
+                        // 2. Buat elemen <canvas> baru untuk QR Code
+                        const canvas = document.createElement('canvas');
+                        qrContainer.appendChild(canvas); // Masukkan canvas ke div
+
+                        // 3. Panggil API 'await QRCode.toCanvas' (API baru)
+                        await QRCode.toCanvas(canvas, userProfile.user_id, {
+                            width: 160,
+                            color: {
+                                dark: '#000000',
+                                light: '#FFFFFF'
+                            },
+                            errorCorrectionLevel: 'H' // 'H' sebagai string sudah benar
+                        });
+                    }
+                } catch (err) {
+                    console.error("Gagal membuat QR Code:", err);
+                    const qrContainer = document.getElementById('qr-code-container'); // Ambil lagi jika error
+                    if(qrContainer) {
+                        qrContainer.innerHTML = "<p class='text-red-500 text-xs'>Gagal memuat QR Code.</p>";
+                    }
+                }
+
+                // Tambahkan listener secara dinamis (kode ini sudah ada)
+                document.getElementById('profile-back-button').addEventListener('click', showEventList);
+                document.getElementById('profile-logout-button').addEventListener('click', handleLogout);
+            }
+        
+        profileButton.addEventListener('click', showProfilePage_v2); // Panggil versi v2
+
+
+        // ======================================================
+        // --- LOGIKA PANEL ADMIN (PENGGANTI AdminPanel) ---
+        // ======================================================
+
+        /**
+         * Menampilkan daftar event di panel admin
+         * (Pengganti AdminEventList)
+         */
+        async function showAdminEventList() {
+            adminContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            
+            try {
+                const { data, error } = await supabase.from('events').select('*').order('id', { ascending: false });
+                if (error) throw error;
+                
+                let eventCardsHTML = '';
+                if (data.length > 0) {
+                     eventCardsHTML = data.map(event => `
+                        <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200">
+                            <h3 class="text-lg font-semibold text-blue-700 mb-1">${event.title}</h3>
+                            <p class="text-sm text-gray-500 mb-2">${event.date} - ${event.location}</p>
+
+                            <div class="flex space-x-2">
+                                <button
+                                    data-action="view-registrations"
+                                    data-id="${event.id}"
+                                    data-title="${encodeURIComponent(event.title)}"
+                                    class="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition"
+                                >
+                                    Lihat Peserta
+                                </button>
+                                <button
+                                    data-action="edit-event"
+                                    data-id="${event.id}"
+                                    class="flex-1 bg-yellow-500 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-yellow-600 transition"
+                                >
+                                    Edit Event
+                                </button>
+                            </div>
+
+                        </div>
+                    `).join('');
+                } else {
+                    eventCardsHTML = `
+                        <div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
+                           Belum ada event yang dibuat.
+                        </div>`;
+                }
+
+                adminContent.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Manajemen Event</h2>
+                        <button
+                            id="navigate-add-event"
+                            class="bg-green-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-green-600 transition duration-300"
+                        >
+                            + Tambah Event
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        ${eventCardsHTML}
+                    </div>`;
+                
+                // Tambahkan listener ke tombol "Tambah Event"
+                document.getElementById('navigate-add-event').addEventListener('click', showAddEventForm);
+
+            } catch (err) {
+                console.error("Error fetching admin events:", err);
+                adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat event.</p>';
+            }
+        }
+
+        /**
+         * Menampilkan form tambah event baru
+         * (Pengganti AddEventForm)
+         */
+        function showAddEventForm() {
+            adminContent.innerHTML = `
+                <button id="admin-back-button" class="text-blue-600 mb-4 font-medium flex items-center hover:text-blue-800 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    Kembali ke Daftar Event
+                </button>
+                <form id="add-event-form" class="bg-white p-6 rounded-lg shadow-inner border space-y-4">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Tambah Event Baru</h2>
+                    
+                    <div>
+                        <label for="event-title" class="block text-sm font-medium text-gray-700">Nama Event</label>
+                        <input type="text" name="title" id="event-title" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label for="event-image_url" class="block text-sm font-medium text-gray-700">Image URL</label>
+                        <input type="text" name="image_url" id="event-image_url" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label for="event-date" class="block text-sm font-medium text-gray-700">Tanggal Kegiatan</label>
+                        <input type="date" name="date" id="event-date" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label for="event-location" class="block text-sm font-medium text-gray-700">Lokasi Kegiatan</label>
+                        <input type="text" name="location" id="event-location" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label for="event-google_map_link" class="block text-sm font-medium text-gray-700">Link Google Map</label>
+                        <input type="text" name="google_map_link" id="event-google_map_link" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label for="event-description" class="block text-sm font-medium text-gray-700">Deskripsi</label>
+                        <textarea name="description" id="event-description" rows="4" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label for="event-materials_link" class="block text-sm font-medium text-gray-700">Link Materi (Opsional)</label>
+                        <input type="text" name="materials_link" id="event-materials_link" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    
+                    <p id="add-event-status" class="text-sm text-center"></p>
+
+                    <button id="add-event-button" type="submit"
+                        class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-700 transition duration-300 disabled:bg-gray-400">
+                        Simpan Event
+                    </button>
+                </form>
+            `;
+            
+            // Tambahkan listener
+            document.getElementById('admin-back-button').addEventListener('click', showAdminEventList);
+            document.getElementById('add-event-form').addEventListener('submit', handleAddEventSubmit);
+        }
+        
+        /**
+         * Menangani submit form tambah event
+         */
+        async function handleAddEventSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const button = document.getElementById('add-event-button');
+            const status = document.getElementById('add-event-status');
+            
+            setButtonLoading(button, true, 'Simpan Event');
+            status.textContent = '';
+            
+            try {
+                // Ambil data dari form
+                const formData = new FormData(form);
+                const eventData = Object.fromEntries(formData.entries());
+
+                // Validasi sederhana (sudah ditangani 'required', tapi bagus untuk double check)
+                if (!eventData.title || !eventData.date || !eventData.location || !eventData.description) {
+                    throw new Error("Nama, Tanggal, Lokasi, dan Deskripsi wajib diisi.");
+                }
+
+                // Kirim ke Supabase
+                const { error } = await supabase.from('events').insert([eventData]);
+                if (error) throw error;
+                
+                // Sukses
+                status.textContent = 'Event berhasil ditambahkan!';
+                status.classList.remove('text-red-500');
+                status.classList.add('text-green-600');
+                
+                // Kembali ke daftar setelah 2 detik
+                setTimeout(() => {
+                    showAdminEventList();
+                }, 2000);
+                
+            } catch (err) {
+                console.error("Error saving event:", err);
+                status.textContent = "Gagal menyimpan event: " + err.message;
+                status.classList.remove('text-green-600');
+                status.classList.add('text-red-500');
+                setButtonLoading(button, false, 'Simpan Event');
+            }
+        }
+        
+        // Listener Logout Admin
+        adminLogoutButton.addEventListener('click', handleLogout);
+
+        /**
+     * Menampilkan daftar peserta (registrasi) untuk sebuah event
+     * @param {string} eventId
+     * @param {string} eventTitle
+     */
+    async function showEventRegistrations(eventId, eventTitle) {
+        adminContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+
+        try {
+            const { data, error } = await supabase
+                .from('registrations')
+                .select('id, user_id, name, phone_number, registered_at, check_in, updated_at')
+                .eq('event_id', eventId);
+
+            if (error) throw error;
+
+            let participantListHTML = '';
+            if (data.length > 0) {
+                participantListHTML = data.map((reg, index) => `
+                    <li class="py-3 px-4 border-b border-gray-200 flex items-center justify-between">
+                        <!-- Kiri: Info Peserta -->
+                        <div class="flex items-center">
+                            <span class="text-sm font-medium text-gray-500 w-8">${index + 1}.</span>
+                            <div>
+                                <p class="font-semibold text-gray-800">${reg.name}</p>
+                                <p class="text-sm text-gray-600">${reg.phone_number}</p>
+                                <!-- Tampilkan timestamp updated_at -->
+                                <p class="text-xs text-gray-500 mt-1" id="updated-at-${reg.id}">
+                                    Updated: ${new Date(reg.updated_at || reg.registered_at).toLocaleString('id-ID')}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Kanan: Tombol Aksi Check In -->
+                        <div class="flex-shrink-0">
+                            ${reg.check_in === 'Hadir' ?
+                                `<!-- Status Sudah Check In -->
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                    Hadir
+                                </span>`
+                                :
+                                `<!-- Tombol untuk Check In -->
+                                <button
+                                    data-action="check-in"
+                                    data-id="${reg.id}"
+                                    class="check-in-button bg-blue-500 text-white py-1 px-3 rounded-lg text-sm font-semibold hover:bg-blue-600 transition"
+                                >
+                                    Check In
+                                </button>`
+                            }
+                        </div>
+                    </li>
+                `).join('');
+            } else {
+                participantListHTML = '<li class="p-4 text-center text-gray-500">Belum ada peserta terdaftar.</li>';
+            }
+
+            adminContent.innerHTML = `
+                <button id="admin-back-button" class="text-blue-600 mb-4 font-medium flex items-center hover:text-blue-800 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    Kembali ke Daftar Event
+                </button>
+                <div class="bg-white p-6 rounded-lg shadow-inner border">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Peserta Event</h2>
+                            <p class="text-lg text-gray-600">${eventTitle}</p>
+                        </div>
+                        <button id="scan-qr-button" class="bg-green-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-green-600 transition duration-300 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m0 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5h-4m0 0v-4m0 4l-5-5" />
+                            </svg>
+                            Scan QR
+                        </button>
+                    </div>
+                    <!-- ▲▲▲ BATAS BLOK HEADER ▲▲▲ -->
+
+                    <!-- ▼▼▼ KONTAINER SCANNER (SEMBUNYI) ▼▼▼ -->
+                    <div id="qr-scanner-container" class="hidden my-4 p-4 border rounded-lg bg-gray-100">
+                        <!-- Di sinilah video kamera akan muncul -->
+                        <div id="qr-reader" style="width: 100%;"></div> 
+                        <p id="qr-scan-feedback" class="text-center text-sm font-medium mt-2"></p>
+                        <button id="close-qr-scanner" class="w-full mt-2 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600">
+                            Tutup Scanner
+                        </button>
+                    </div>
+
+                    <ul class="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                        ${participantListHTML}
+                    </ul>
+                </div>
+            `;
+
+            // Tambahkan listener untuk tombol kembali
+            document.getElementById('admin-back-button').addEventListener('click', showAdminEventList);
+            // Tambahkan listener untuk tombol scan
+            document.getElementById('scan-qr-button').addEventListener('click', () => {
+            // 'data' adalah array peserta yang kita ambil di atas
+            startQrScanner(data); 
+        });
+
+        // Tambahkan listener untuk tombol tutup scanner
+        document.getElementById('close-qr-scanner').addEventListener('click', stopQrScanner);
+
+        } catch (err) {
+            console.error("Error fetching registrations:", err);
+            adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat data peserta.</p>';
+        }
+    }
+
+    /**
+     * Menampilkan form untuk EDIT event yang sudah ada
+     * @param {string} eventId
+     */
+    async function showEditEventForm(eventId) {
+        adminContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+
+        try {
+            // 1. Ambil data event saat ini
+            const { data: event, error } = await supabase
+                .from('events')
+                .select('*')
+                .eq('id', eventId)
+                .single();
+
+            if (error) throw error;
+
+            // 2. Render form, isi dengan 'value'
+            // Pastikan handle nilai null dengan '|| ""'
+            adminContent.innerHTML = `
+                <button id="admin-back-button" class="text-blue-600 mb-4 font-medium flex items-center hover:text-blue-800 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    Kembali ke Daftar Event
+                </button>
+                <form id="edit-event-form" data-id="${event.id}" class="bg-white p-6 rounded-lg shadow-inner border space-y-4">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Edit Event</h2>
+
+                    <div>
+                        <label for="event-title" class="block text-sm font-medium text-gray-700">Nama Event</label>
+                        <input type="text" name="title" id="event-title" required value="${event.title}" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label for="event-image_url" class="block text-sm font-medium text-gray-700">Image URL</label>
+                        <input type="text" name="image_url" id="event-image_url" value="${event.image_url || ''}" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label for="event-date" class="block text-sm font-medium text-gray-700">Tanggal Kegiatan</label>
+                        <input type="date" name="date" id="event-date" required value="${event.date}" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label for="event-location" class="block text-sm font-medium text-gray-700">Lokasi Kegiatan</label>
+                        <input type="text" name="location" id="event-location" required value="${event.location}" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label for="event-google_map_link" class="block text-sm font-medium text-gray-700">Link Google Map</label>
+                        <input type="text" name="google_map_link" id="event-google_map_link" value="${event.google_map_link || ''}" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                        <label for="event-description" class="block text-sm font-medium text-gray-700">Deskripsi</label>
+                        <textarea name="description" id="event-description" rows="4" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">${event.description}</textarea>
+                    </div>
+                    <div>
+                        <label for="event-materials_link" class="block text-sm font-medium text-gray-700">Link Materi (Opsional)</label>
+                        <input type="text" name="materials_link" id="event-materials_link" value="${event.materials_link || ''}" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+
+                    <p id="edit-event-status" class="text-sm text-center"></p>
+
+                    <button id="edit-event-button" type="submit"
+                        class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-700 transition duration-300 disabled:bg-gray-400">
+                        Update Event
+                    </button>
+                </form>
+            `;
+
+            // 3. Tambahkan listener
+            document.getElementById('admin-back-button').addEventListener('click', showAdminEventList);
+            document.getElementById('edit-event-form').addEventListener('submit', handleEditEventSubmit);
+
+        } catch (err) {
+            console.error("Error fetching event for edit:", err);
+            adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat data event.</p>';
+        }
+    }
+
+        /**
+         * Menangani submit form EDIT event
+         */
+        async function handleEditEventSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const eventId = form.dataset.id; // Ambil ID dari form
+            const button = document.getElementById('edit-event-button');
+            const status = document.getElementById('edit-event-status');
+
+            setButtonLoading(button, true, 'Update Event');
+            status.textContent = '';
+
+            try {
+                // Ambil data dari form
+                const formData = new FormData(form);
+                const eventData = Object.fromEntries(formData.entries());
+
+                // Kirim update ke Supabase
+                const { error } = await supabase
+                    .from('events')
+                    .update(eventData) // Gunakan .update()
+                    .eq('id', eventId); // Tentukan ID mana yang di-update
+
+                if (error) throw error;
+
+                // Sukses
+                status.textContent = 'Event berhasil diperbarui!';
+                status.classList.remove('text-red-500');
+                status.classList.add('text-green-600');
+
+                // Kembali ke daftar setelah 2 detik
+                setTimeout(() => {
+                    showAdminEventList();
+                }, 2000);
+
+            } catch (err) {
+                console.error("Error updating event:", err);
+                status.textContent = "Gagal memperbarui event: " + err.message;
+                status.classList.remove('text-green-600');
+                status.classList.add('text-red-500');
+                setButtonLoading(button, false, 'Update Event');
+            }
+        }
+
+        /**
+         * Menangani check-in peserta
+         * @param {string} registrationId - ID dari tabel 'registrations'
+         * @param {HTMLButtonElement} button - Tombol yang diklik
+         */
+
+        async function handleCheckIn(registrationId, button) {
+            // 1. Set loading state
+            button.disabled = true;
+            button.innerHTML = '<div class="spinner mx-auto" style="width: 16px; height: 16px; border-left-color: white;"></div>';
+
+            try {
+                // 2. Update 'check_in' to true.
+                // 'updated_at' akan di-handle oleh trigger SQL
+                const { data, error } = await supabase
+                    .from('registrations')
+                    .update({ check_in: 'Hadir' })
+                    .eq('id', registrationId)
+                    .select('updated_at') // Ambil 'updated_at' yang baru
+                    .single();
+
+                if (error) throw error;
+
+                // 3. Sukses: Ganti tombol dengan status "Hadir"
+                const statusSpan = document.createElement('span');
+                statusSpan.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+                statusSpan.textContent = 'Hadir';
+
+                button.parentElement.replaceChild(statusSpan, button); // Ganti tombol -> span
+
+                // 4. Update timestamp 'updated_at' di UI
+                const updatedAtElement = document.getElementById(`updated-at-${registrationId}`);
+                if (updatedAtElement && data.updated_at) {
+                    updatedAtElement.textContent = `Updated: ${new Date(data.updated_at).toLocaleString('id-ID')}`;
+                }
+
+            } catch (err) {
+                console.error("Error checking in:", err);
+                button.disabled = false;
+                button.textContent = 'Check In';
+                // (Opsional) Tampilkan pesan error di dekat tombol
+            }
+        }
+
+                /**
+             * Memulai QR Scanner
+             * @param {Array} participants - Array data peserta dari showEventRegistrations
+             */
+            function startQrScanner(participants) {
+                const scannerContainer = document.getElementById('qr-scanner-container');
+                const feedbackEl = document.getElementById('qr-scan-feedback');
+
+                if (!scannerContainer || !feedbackEl) return;
+
+                scannerContainer.classList.remove('hidden');
+                feedbackEl.textContent = 'Arahkan kamera ke QR Code...';
+                feedbackEl.className = 'text-center text-sm font-medium mt-2 text-gray-700';
+
+                // 1. Buat Map untuk pencarian super cepat (user_id -> registration object)
+                // Kita butuh 'user_id' (dari QR) dan 'id' (ID registrasi)
+                const participantMap = new Map(participants.map(p => [p.user_id, p]));
+
+                // 2. Callback ketika scan berhasil
+                const onScanSuccess = (decodedText, decodedResult) => {
+                    // decodedText adalah user_id dari QR code profil
+                    const registration = participantMap.get(decodedText);
+
+                    if (registration) {
+                        // Peserta ditemukan di event ini
+
+                        // Cek status terbaru langsung dari DOM
+                        const checkInButton = document.querySelector(`button[data-action='check-in'][data-id='${registration.id}']`);
+
+                        if (checkInButton) {
+                            // Jika tombol "Check In" masih ada, berarti BELUM hadir
+                            handleCheckIn(registration.id, checkInButton); // Panggil fungsi yang ada!
+                            feedbackEl.textContent = `Berhasil check-in ${registration.name}!`;
+                            feedbackEl.className = 'text-center text-sm font-medium mt-2 text-green-600';
+
+                        } else {
+                            // Tombol tidak ada, berarti sudah Hadir
+                            feedbackEl.textContent = `${registration.name} sudah Hadir.`;
+                            feedbackEl.className = 'text-center text-sm font-medium mt-2 text-blue-600';
+                        }
+
+                    } else {
+                        // Peserta tidak terdaftar di event ini
+                        feedbackEl.textContent = `Peserta (ID: ${decodedText.substring(0, 8)}...) tidak terdaftar di event ini.`;
+                        feedbackEl.className = 'text-center text-sm font-medium mt-2 text-red-600';
+                    }
+                };
+
+                // 3. Callback jika error (opsional)
+                const onScanFailure = (error) => {
+                    // Dibiarkan kosong agar tidak spam console
+                };
+
+                // 4. Inisialisasi dan Render scanner
+                if (!html5QrCode) {
+                    html5QrCode = new window.Html5Qrcode("qr-reader"); // <-- TAMBAHKAN 'window.'
+                }
+
+                html5QrCode.start(
+                    { facingMode: "environment" }, // Gunakan kamera belakang
+                    {
+                        fps: 10, // Frame per second
+                        qrbox: { width: 250, height: 250 } // Ukuran kotak scan
+                    },
+                    onScanSuccess,
+                    onScanFailure
+                ).catch(err => {
+                    console.error("Gagal memulai QR scanner:", err);
+                    feedbackEl.textContent = 'Gagal memulai kamera. Pastikan Anda memberi izin.';
+                    feedbackEl.className = 'text-center text-sm font-medium mt-2 text-red-600';
+                });
+            }
+
+            /**
+             * Menghentikan QR Scanner
+             */
+            function stopQrScanner() {
+                const scannerContainer = document.getElementById('qr-scanner-container');
+                if (scannerContainer) {
+                    scannerContainer.classList.add('hidden');
+                }
+
+                if (html5QrCode) {
+                    html5QrCode.stop().then(() => {
+                        console.log("QR Scanner stopped.");
+                    }).catch(err => {
+                        console.error("Gagal menghentikan scanner:", err);
+                    });
+                }
+            }
+
+        // --- INISIALISASI APLIKASI ---
+        
+        // Tambahkan listener utama ke form login dan registrasi
+        loginForm.addEventListener('submit', handleLogin);
+        registerForm.addEventListener('submit', handleRegister);
+        
+        document.getElementById('admin-nav-button').addEventListener('click', () => {
+            if (userProfile && userProfile.role === 'admin') {
+                showAdminEventList(); // Muat konten admin
+                showPage('admin-panel-page'); // Pindah halaman
+            }
+        });    
+
+        document.getElementById('admin-back-to-member-button').addEventListener('click', () => {
+            showEventList(); // Muat konten member
+            showPage('main-app-page'); // Pindah halaman
+            });
+
+            adminContent.addEventListener('click', (e) => {
+            const button = e.target.closest('button');
+            if (!button) return; // Bukan klik pada tombol
+
+            const action = button.dataset.action;
+            const id = button.dataset.id;
+
+            if (action === 'view-registrations') {
+                const title = decodeURIComponent(button.dataset.title);
+                showEventRegistrations(id, title);
+            } else if (action === 'edit-event') {
+                showEditEventForm(id);
+            } else if (action === 'check-in') {
+            handleCheckIn(id, button);    
+            }
+        });
+
+        // Mulai aplikasi
+        // Tunggu DOM dimuat, lalu tampilkan halaman login
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('login-page'); // Ganti 'loading-page' ke 'login-page'
+        });
+
+    </script>
+
+</body>
+</html>
