@@ -3,7 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HAQI Ujungberung - Versi HTML/JS</title>
+    <title>HAQI Ujungberung</title>
+
+    <!-- Deskripsi Standar -->
+    <meta name="description" content="Aplikasi manajemen kegiatan HAQI.">
+    
+    <!-- Open Graph Tags (untuk WhatsApp, Facebook, dll.) -->
+    <meta property="og:title" content="HAQI Ujungberung">
+    <meta property="og:description" content="Aplikasi manajemen kegiatan HAQI.">
+    <meta property="og:type" content="website">
+    
+    <!-- INI YANG PALING PENTING (Gambar Preview) -->
+    <!-- Saya menggunakan URL logo dari halaman login Anda -->
+    <meta property="og:image" content="https://blogger.googleusercontent.com/img/a/AVvXsEj73RW53O3BQuQdL07frUji9vbVo8MWkPBuNpWCV_GEMFglevINHdtpEfIMfHCkwlx7un1m7rCvEH1u7VzFZFVXgRvgd8JldQEO0c8WS5l9S41DOBYoUQ9J-BX4zmku9_DRipeMkNezZsgUtAIwEsEs6MgiblgrZ3pv1lNAMH-h2nTg3IG4t12Amwv570k">
+    
+    <!-- Anda bisa menentukan ukuran gambar (opsional, tapi disarankan) -->
+    <meta property="og:image:width" content="500">
+    <meta property="og:image:height" content="500">
+
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -151,7 +168,7 @@
 
                     <!-- Tombol Profil (Yang sudah ada) -->
                     <div id="profile-button" class="flex items-center space-x-2 cursor-pointer">
-                        <span id="header-username" class="text-gray-700 font-medium">Hi, User</span>
+                        <span id="header-username" class="text-gray-700 font-medium">User</span>
                         <div id="header-avatar" class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
                             U
                         </div>
@@ -416,10 +433,12 @@
          */
         function handleLoginSuccess(profile) {
             userProfile = profile; // Simpan profil ke state global
+            // Simpan profil ke localStorage sebagai string JSON
+            localStorage.setItem('userProfile', JSON.stringify(profile));
 
             // --- Tampilan Member (Default untuk SEMUA) ---
             const firstName = userProfile.name.split(' ')[0] || 'User';
-            mainHeaderUsername.textContent = `Hi, ${firstName}`;
+            mainHeaderUsername.textContent = `${firstName}`;
             mainHeaderAvatar.textContent = firstName.charAt(0);
 
             // Cek Role untuk tombol admin
@@ -442,6 +461,8 @@
          */
         function handleLogout() {
             userProfile = null; // Hapus state global
+            // Hapus profil dari localStorage
+            localStorage.removeItem('userProfile');
             loginPhoneInput.value = ''; // Bersihkan form login
             clearError(loginError);
             showPage('login-page'); // Kembali ke halaman login
@@ -1531,11 +1552,33 @@
             }
         });
 
+        /**
+         * --- INISIALISASI APLIKASI UTAMA ---
+         * Cek sesi yang ada di localStorage saat aplikasi pertama kali dimuat.
+         */
+        function initializeApp() {
+            const savedProfileString = localStorage.getItem('userProfile');
+            
+            if (savedProfileString) {
+                try {
+                    // Jika ada sesi, parse datanya
+                    const profile = JSON.parse(savedProfileString);
+                    // Langsung panggil handleLoginSuccess (ini akan set header, cek admin, dan tampilkan event)
+                    handleLoginSuccess(profile);
+                } catch (e) {
+                    // Jika data JSON rusak, hapus sesi dan tampilkan login
+                    console.error("Gagal memuat sesi:", e);
+                    localStorage.removeItem('userProfile');
+                    showPage('login-page');
+                }
+            } else {
+                // Tidak ada sesi, tampilkan halaman login
+                showPage('login-page');
+            }
+        }
+        
         // Mulai aplikasi
-        // Tunggu DOM dimuat, lalu tampilkan halaman login
-        document.addEventListener('DOMContentLoaded', () => {
-            showPage('login-page'); // Ganti 'loading-page' ke 'login-page'
-        });
+        document.addEventListener('DOMContentLoaded', initializeApp);
 
     </script>
 
