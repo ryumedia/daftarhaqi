@@ -176,6 +176,24 @@
                 </div>
             </div>
         </header>
+
+        <nav id="main-nav-tabs" class="bg-white shadow-sm w-full flex-shrink-0">
+            <div class="flex justify-around border-b border-gray-200">
+                <!-- Tab 1: Kegiatan -->
+                <button id="nav-tab-kegiatan" class="nav-tab w-full py-3 px-4 text-center font-semibold text-green-600 border-b-2 border-green-600" data-tab="kegiatan">
+                    Kegiatan
+                </button>
+                <!-- Tab 2: Tahsin -->
+                <button id="nav-tab-tahsin" class="nav-tab w-full py-3 px-4 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-green-600 hover:border-gray-300" data-tab="tahsin">
+                    Tahsin
+                </button>
+                <!-- Tab 3: Setoran -->
+                <button id="nav-tab-setoran" class="nav-tab w-full py-3 px-4 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-green-600 hover:border-gray-300" data-tab="setoran">
+                    Hafalan
+                </button>
+            </div>
+        </nav>
+
         <!-- Konten Aplikasi Member (Daftar, Detail, Profil) -->
         <main id="main-content" class="flex-1 overflow-y-auto p-4">
             <!-- Konten dinamis akan di-render di sini -->
@@ -217,6 +235,42 @@
         </main>
     </div>
 
+        <!-- 6. Modal Tambah Setoran (Hidden by default) -->
+        <!-- Backdrop (Latar belakang gelap) -->
+        <div id="setoran-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+        
+        <!-- Konten Modal -->
+        <div id="setoran-modal" 
+            class="fixed inset-x-0 bottom-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 w-full max-w-lg p-4 hidden">
+            <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+                <!-- Form untuk menambah setoran -->
+                <form id="setoran-form" class="p-6 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-gray-800">Tambah Hafalan Baru</h2>
+                        <button type="button" id="close-setoran-modal" class="text-gray-400 text-2xl font-bold hover:text-gray-600">&times;</button>
+                    </div>
+                    
+                    <div>
+                        <label for="surah-name" class="block text-sm font-medium text-gray-700">Nama Surah</label>
+                        <input type="text" name="surah_name" id="surah-name" required 
+                            class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    
+                    <div>
+                        <label for="total-ayat" class="block text-sm font-medium text-gray-700">Jumlah Ayat</label>
+                        <input type="number" name="total_ayat" id="total-ayat" required 
+                            class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    
+                    <p id="setoran-status" class="text-sm text-center"></p>
+                    
+                    <button id="setoran-submit-button" type="submit" 
+                            class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:bg-green-700 transition duration-300 disabled:bg-gray-400">
+                        Simpan
+                    </button>
+                </form>
+            </div>
+        </div>
 
     <!-- =================================================================== -->
     <!-- SCRIPT UTAMA APLIKASI (JAVASCRIPT MURNI) -->
@@ -327,6 +381,63 @@
             }
         }
         
+        /**
+         * Mengubah format tanggal dari YYYY-MM-DD ke DD-MM-YYYY
+         * @param {string} dateString - Tanggal dalam format 'YYYY-MM-DD'
+         */
+        function formatDate(dateString) {
+            if (!dateString) return ''; // Handle null atau undefined
+            const parts = dateString.split('-');
+            if (parts.length !== 3) return dateString; // Kembalikan format asli jika tidak sesuai
+            // [YYYY, MM, DD] -> [DD, MM, YYYY]
+            return `${parts[2]}-${parts[1]}-${parts[0]}`; 
+        }
+
+        /**
+         * Mengatur style tab yang aktif secara visual
+         * @param {'kegiatan' | 'tahsin' | 'setoran'} activeTabName 
+         */
+        function setActiveTab(activeTabName) {
+            const allTabs = document.querySelectorAll('.nav-tab');
+            allTabs.forEach(tab => {
+                const tabName = tab.dataset.tab;
+                if (tabName === activeTabName) {
+                    // Style Aktif
+                    tab.classList.remove('text-gray-500', 'border-transparent', 'hover:border-gray-300', 'font-medium');
+                    tab.classList.add('text-green-600', 'border-green-600', 'font-semibold');
+                } else {
+                    // Style Inaktif
+                    tab.classList.remove('text-green-600', 'border-green-600', 'font-semibold');
+                    tab.classList.add('text-gray-500', 'border-transparent', 'hover:border-gray-300', 'font-medium');
+                }
+            });
+        }
+
+        // --- Variabel dan Fungsi Modal Setoran ---
+        const setoranModal = document.getElementById('setoran-modal');
+        const setoranModalBackdrop = document.getElementById('setoran-modal-backdrop');
+        const setoranForm = document.getElementById('setoran-form');
+        const setoranStatus = document.getElementById('setoran-status');
+        const setoranSubmitButton = document.getElementById('setoran-submit-button');
+
+        /**
+         * Menampilkan modal tambah setoran
+         */
+        function showSetoranModal() {
+            setoranForm.reset(); // Bersihkan form setiap kali dibuka
+            clearError(setoranStatus);
+            setoranModal.classList.remove('hidden');
+            setoranModalBackdrop.classList.remove('hidden');
+        }
+
+        /**
+         * Menyembunyikan modal tambah setoran
+         */
+        function hideSetoranModal() {
+            setoranModal.classList.add('hidden');
+            setoranModalBackdrop.classList.add('hidden');
+        }
+
         // --- Fungsi Autentikasi ---
 
         /**
@@ -486,6 +597,9 @@
          * (Pengganti komponen EventList)
          */
         async function showEventList() {
+            document.getElementById('main-nav-tabs').classList.remove('hidden');
+            setActiveTab('kegiatan');
+
             mainContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
             
             try {
@@ -607,7 +721,7 @@
                             <!-- Kiri: Judul & Info Tanggal -->
                             <div class="flex-1 min-w-0 mr-2"> <!-- min-w-0 penting untuk flexbox -->
                                 <h3 class="text-lg font-semibold text-green-700">${event.title}</h3>
-                                <p class="text-sm text-gray-500 mt-1">${event.date} - ${event.location}</p>
+                                <p class="text-sm text-gray-500 mt-1">${formatDate(event.date)} - ${event.location}</p>
                             </div>
                             <!-- Kanan: Countdown Box (Dari Pembaruan 1) -->
                             ${countdownHTML}
@@ -622,7 +736,6 @@
                 }).join('');
                 
                 mainContent.innerHTML = `
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Daftar Kegiatan</h2>
                     <div class="space-y-4">
                         ${eventCardsHTML}
                     </div>`;
@@ -630,6 +743,178 @@
             } catch (err) {
                 console.error("Error fetching events:", err);
                 mainContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat event.</p>';
+            }
+        }
+
+        /**
+         * Menampilkan halaman 'Tahsin' (Halaman utama Member)
+         */
+        async function showTahsinPage() {
+            // 1. Tampilkan tab bar
+            document.getElementById('main-nav-tabs').classList.remove('hidden');
+            // 2. Set tab aktif
+            setActiveTab('tahsin');
+            // 3. Tampilkan loading
+            mainContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            
+            try {
+                // 4. Ambil data course
+                const { data, error } = await supabase
+                    .from('course')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                
+                let courseCardsHTML = '';
+                if (data.length > 0) {
+                    courseCardsHTML = data.map(course => `
+                        <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                            <div class="p-4">
+                                <h3 class="text-lg font-semibold text-green-700">${course.course_title}</h3>
+                                <p class="text-xs text-gray-500 mb-2">Diposting: ${new Date(course.created_at).toLocaleDateString('id-ID')}</p>
+                                <p class="text-sm text-gray-700 line-clamp-3 mb-3">${course.description || 'Tidak ada deskripsi.'}</p>
+                                
+                                ${course.course_link ? `
+                                    <a 
+                                        href="${course.course_link}" 
+                                        target="_blank" rel="noopener noreferrer" 
+                                        class="inline-block w-full text-center bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition"
+                                    >
+                                        Buka Materi
+                                    </a>
+                                ` : `
+                                    <span class="inline-block w-full text-center bg-gray-300 text-gray-600 py-2 px-3 rounded-lg text-sm font-semibold cursor-not-allowed">
+                                        Materi Belum Tersedia
+                                    </span>
+                                `}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    courseCardsHTML = `
+                        <div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
+                           Belum ada materi tahsin yang tersedia.
+                        </div>`;
+                }
+
+                // 5. Render konten
+                mainContent.innerHTML = `
+                    <!-- 1. Gambar Banner Tahsin (Sudah diubah) -->
+                    <img 
+                        src="https://blogger.googleusercontent.com/img/a/AVvXsEhIGOz3ysa2kj9UE1oP8J3GjxM0P8Su8Md-db8UL6MPJ_Y_Q65Ql25avK4TAQspsX6Vuw6Gi1z-3gGTwNUFSW3-UtxopiHKOcG_eknqHaMhbgNEUta52Tm_14bf9IjwUV214xTez_csqJGfFm2__0aw3MW6M2a7UNc4t7PiE6arG4hnjAb7sZPOdYbG2Zs" 
+                        alt="Banner Tahsin" 
+                        class="w-full h-36 object-cover rounded-lg shadow-md mb-4"
+                        onerror="this.style.display='none'" 
+                    >
+                    
+                    <!-- 2. Daftar Materi -->
+                    <div class="space-y-4">
+                        ${courseCardsHTML}
+                    </div>
+                `;
+
+            } catch (err) {
+                console.error("Error fetching courses:", err);
+                mainContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat materi tahsin.</p>';
+            }
+        }
+
+        /**
+         * Menampilkan halaman 'Setoran' (Halaman utama Member)
+         */
+        async function showSetoranPage() {
+            // 1. Tampilkan tab bar
+            document.getElementById('main-nav-tabs').classList.remove('hidden');
+            // 2. Set tab aktif
+            setActiveTab('setoran');
+            // 3. Tampilkan loading
+            mainContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+
+            try {
+                // 4. Ambil data report milik user ini, urutkan terbaru di atas
+                const { data, error } = await supabase
+                    .from('report')
+                    .select('*')
+                    .eq('user_id', userProfile.user_id)
+                    .order('created_at', { ascending: false }); 
+
+                if (error) throw error;
+
+                // Hitung total ayat (mudah, tinggal di-sum)
+                const totalAyat = data.reduce((acc, report) => acc + (report.total_ayat || 0), 0);
+                
+                // Hitung total surat unik (menggunakan Set)
+                const uniqueSurahNames = new Set(data.map(report => report.surah_name));
+                const totalSuratUnik = uniqueSurahNames.size;
+                // --- Batas Logika Rekapitulasi ---
+
+                let reportCardsHTML = '';
+                if (data.length > 0) {
+                    reportCardsHTML = data.map(report => `
+                        <div class="report-card bg-white p-4 rounded-lg shadow-md border border-gray-200 flex justify-between items-center">
+                            <!-- Info Laporan -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-green-700">${report.surah_name}</h3>
+                                <p class="text-sm text-gray-600">${report.total_ayat} ayat</p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Disetor: ${new Date(report.created_at).toLocaleString('id-ID')}
+                                </p>
+                            </div>
+                            <!-- Tombol Delete -->
+                            <button
+                                data-action="delete-report"
+                                data-id="${report.id}"
+                                title="Hapus Setoran"
+                                class="delete-report-button flex-shrink-0 bg-red-100 text-red-600 w-10 h-10 rounded-full font-semibold shadow-sm hover:bg-red-200 transition flex items-center justify-center disabled:bg-gray-400"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    reportCardsHTML = `
+                        <div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
+                           Belum ada setoran hafalan yang dilaporkan.
+                        </div>`;
+                }
+
+                // 5. Render konten
+                mainContent.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-800">Laporan Hafalan</h2>
+                        <button
+                            id="add-setoran-button"
+                            class="bg-orange-600 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-orange-700 transition duration-300"
+                        >
+                            + Tambah Hafalan
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <!-- Card Total Surat -->
+                        <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center">
+                            <p class="text-sm font-medium text-gray-500">Total Surat Dihafal</p>
+                            <p class="text-3xl font-bold text-green-600">${totalSuratUnik}</p>
+                        </div>
+                        <!-- Card Total Ayat -->
+                        <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center">
+                            <p class="text-sm font-medium text-gray-500">Total Ayat Dihafal</p>
+                            <p class="text-3xl font-bold text-green-600">${totalAyat}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        ${reportCardsHTML}
+                    </div>
+                `;
+
+                // 6. Tambahkan listener ke tombol tambah
+                document.getElementById('add-setoran-button').addEventListener('click', showSetoranModal);
+
+            } catch (err) {
+                console.error("Error fetching reports:", err);
+                mainContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat laporan setoran.</p>';
             }
         }
 
@@ -778,8 +1063,7 @@
                 </button>
                 
                 <div class="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
-                    
-		<div class="flex flex-col items-center mt-8 border-t border-gray-200 pt-6">
+		<div class="flex flex-col items-center mt-2">
                     	<p class="text-sm font-medium text-gray-600 mb-3">ID Peserta Anda</p>
                     	<!-- Container untuk QR Code -->
                     	<div id="qr-code-container" class="p-2 bg-white border rounded-lg shadow-inner">
@@ -818,6 +1102,8 @@
         // --- Event Listener Navigasi Member ---        
         // --- Versi Perbaikan showEventDetail ---
         async function showEventDetail_v2(eventId) {
+            document.getElementById('main-nav-tabs').classList.add('hidden');
+
             mainContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
             
             try {
@@ -876,9 +1162,9 @@
                             }
                         </div>
                         
-                        <div class="p-6">
+                       <div class="p-6">
                             <h1 class="text-3xl font-bold text-gray-800 mb-3">${event.title}</h1>
-                            <p class="text-gray-600 text-lg mb-2"><span class="font-semibold">Tanggal:</span> ${event.date}</p>
+                            <p class="text-gray-600 text-lg mb-2"><span class="font-semibold">Tanggal:</span> ${formatDate(event.date)}</p>
                             <p class="text-gray-600 text-lg mb-4"><span class="font-semibold">Lokasi:</span> ${event.location}</p>
                             
                             ${event.google_map_link ? `<a href="${event.google_map_link}" target="_blank" rel="noopener noreferrer" class="text-green-600 hover:underline mb-4 inline-block">Lihat Peta Google</a>` : ''}
@@ -929,10 +1215,18 @@
                 showEventDetail_v2(eventCard.dataset.id); // Panggil versi v2
                 return;
             }
+            const deleteButton = e.target.closest('[data-action="delete-report"]');
+            if (deleteButton) {
+                const reportId = deleteButton.dataset.id;
+                // Panggil fungsi delete
+                handleDeleteReport(reportId, deleteButton);
+                return;
+            }
         });
         
         // Ganti pemanggil di showProfilePage juga
             async function showProfilePage_v2() { // <-- 1. Tambahkan 'async'
+                document.getElementById('main-nav-tabs').classList.add('hidden');
                 showProfilePage(); // Panggil fungsi render
 
                 try {
@@ -991,7 +1285,7 @@
                      eventCardsHTML = data.map(event => `
                         <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200">
                             <h3 class="text-lg font-semibold text-green-700 mb-1">${event.title}</h3>
-                            <p class="text-sm text-gray-500 mb-2">${event.date} - ${event.location}</p>
+                            <p class="text-sm text-gray-500 mb-2">${formatDate(event.date)} - ${event.location}</p>
 
                             <div class="flex space-x-2">
                                 <button
@@ -1022,17 +1316,32 @@
 
                 adminContent.innerHTML = `
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">Manajemen Event</h2>
                         <button
-                            id="navigate-add-event"
-                            class="bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-green-600 transition duration-300"
-                        >
-                            + Tambah Event
+                                id="navigate-add-event"
+                                class="bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-blue-600 transition duration-300"
+                            >
+                                + Tambah Event
                         </button>
+                        <button
+                                id="navigate-tahsin-list"
+                                data-action="navigate-tahsin-list" 
+                                class="w-full sm:w-auto bg-orange-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-orange-600 transition duration-300"
+                            >
+                                Kelola Tahsin
+                        </button>
+                        <button
+                                id="navigate-report-list"
+                                data-action="navigate-report-list" 
+                                class="w-full sm:w-auto bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-purple-700 transition"
+                            >
+                                Laporan Hafalan
+                            </button>
+                        </div>        
                     </div>
                     <div class="space-y-4">
                         ${eventCardsHTML}
-                    </div>`;
+                    </div>
+                    `;
                 
                 // Tambahkan listener ke tombol "Tambah Event"
                 document.getElementById('navigate-add-event').addEventListener('click', showAddEventForm);
@@ -1054,7 +1363,7 @@
                     Kembali ke Daftar Kegiatan
                 </button>
                 <form id="add-event-form" class="bg-white p-6 rounded-lg shadow-inner border space-y-4">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Tambah Event Baru</h2>
+                    <h2 class="text-lg font-bold text-gray-800 mb-4">Tambah Event Baru</h2>
                     
                     <div>
                         <label for="event-title" class="block text-sm font-medium text-gray-700">Nama Event</label>
@@ -1376,6 +1685,315 @@
         }
 
         /**
+         * Menampilkan daftar materi Tahsin di panel admin
+         */
+        async function showAdminTahsinList() {
+            adminContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            
+            try {
+                const { data, error } = await supabase.from('course').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                
+                let courseCardsHTML = '';
+                if (data.length > 0) {
+                     courseCardsHTML = data.map(course => `
+                        <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200">
+                            <h3 class="text-lg font-semibold text-green-700 mb-1">${course.course_title}</h3>
+                            <p class="text-sm text-gray-500 mb-2">Dibuat: ${new Date(course.created_at).toLocaleString('id-ID')}</p>
+                            <p class="text-sm text-gray-700 line-clamp-2 mb-3">${course.description || 'Tidak ada deskripsi.'}</p>
+                            
+                            ${course.course_link ? `
+                                <a 
+                                    href="${course.course_link}" 
+                                    target="_blank" rel="noopener noreferrer" 
+                                    class="inline-block w-full text-center bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition"
+                                >
+                                    Buka Materi
+                                </a>
+                            ` : `
+                                <span class="inline-block w-full text-center bg-gray-300 text-gray-600 py-2 px-3 rounded-lg text-sm font-semibold cursor-not-allowed">
+                                    Materi Belum Tersedia
+                                </span>
+                            `}
+                            
+                            <!-- Tombol Edit/Delete bisa ditambahkan di sini nanti -->
+                        </div>
+                    `).join('');
+                } else {
+                    courseCardsHTML = `<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">Belum ada materi tahsin.</div>`;
+                }
+
+                adminContent.innerHTML = `
+                    <button id="admin-back-button" class="text-green-600 mb-4 font-medium flex items-center hover:text-green-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        Kembali ke Panel Admin
+                    </button>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-800">Materi Tahsin</h2>
+                        <button
+                            id="navigate-add-tahsin"
+                            data-action="navigate-add-tahsin"
+                            class="bg-green-600 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-green-700 transition duration-300"
+                        >
+                            + Tambah
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        ${courseCardsHTML}
+                    </div>`;
+                
+                // Tambahkan listener
+                document.getElementById('admin-back-button').addEventListener('click', showAdminEventList);
+
+            } catch (err) {
+                console.error("Error fetching admin courses:", err);
+                adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat materi tahsin.</p>';
+            }
+        }    
+
+        /**
+         * Menampilkan form tambah materi tahsin baru
+         */
+        function showAddTahsinForm() {
+            adminContent.innerHTML = `
+                <button id="admin-back-tahsin-button" class="text-green-600 mb-4 font-medium flex items-center hover:text-green-800 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    Kembali ke Daftar Materi
+                </button>
+                <form id="add-tahsin-form" class="bg-white p-6 rounded-lg shadow-inner border space-y-4">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Tambah Materi Tahsin Baru</h2>
+                    
+                    <div>
+                        <label for="course-title" class="block text-sm font-medium text-gray-700">Nama Tahsin (Judul)</label>
+                        <input type="text" name="course_title" id="course-title" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    
+                    <div>
+                        <label for="course-description" class="block text-sm font-medium text-gray-700">Deskripsi</label>
+                        <textarea name="description" id="course-description" rows="4" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+                    </div>
+
+                    <div>
+                        <label for="course-link" class="block text-sm font-medium text-gray-700">Link Materi (Google Drive, YouTube, dll)</label>
+                        <input type="text" name="course_link" id="course-link" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    
+                    <p id="add-tahsin-status" class="text-sm text-center"></p>
+
+                    <button id="add-tahsin-button" type="submit"
+                        class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:bg-green-700 transition duration-300 disabled:bg-gray-400">
+                        Simpan Materi
+                    </button>
+                </form>
+            `;
+            
+            // Tambahkan listener
+            document.getElementById('admin-back-tahsin-button').addEventListener('click', showAdminTahsinList);
+            document.getElementById('add-tahsin-form').addEventListener('submit', handleAddTahsinSubmit);
+        }
+
+        /**
+         * Menangani submit form tambah materi tahsin
+         */
+        async function handleAddTahsinSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const button = document.getElementById('add-tahsin-button');
+            const status = document.getElementById('add-tahsin-status');
+            
+            setButtonLoading(button, true, 'Simpan Materi');
+            status.textContent = '';
+            
+            try {
+                // Ambil data dari form
+                const formData = new FormData(form);
+                const courseData = Object.fromEntries(formData.entries());
+
+                // Validasi
+                if (!courseData.course_title) {
+                    throw new Error("Nama Tahsin (Judul) wajib diisi.");
+                }
+
+                // Kirim ke Supabase (created_at akan diisi otomatis)
+                const { error } = await supabase.from('course').insert([courseData]);
+                if (error) throw error;
+                
+                // Sukses
+                status.textContent = 'Materi berhasil ditambahkan!';
+                status.classList.remove('text-red-500');
+                status.classList.add('text-green-600');
+                
+                // Kembali ke daftar setelah 2 detik
+                setTimeout(() => {
+                    showAdminTahsinList();
+                }, 2000);
+                
+            } catch (err) {
+                console.error("Error saving course:", err);
+                status.textContent = "Gagal menyimpan materi: " + err.message;
+                status.classList.remove('text-green-600');
+                status.classList.add('text-red-500');
+                setButtonLoading(button, false, 'Simpan Materi');
+            }
+        }
+
+        /**
+         * Menangani submit form tambah setoran dari modal
+         */
+        async function handleAddSetoranSubmit(e) {
+            e.preventDefault();
+            
+            const surahName = document.getElementById('surah-name').value;
+            const totalAyat = document.getElementById('total-ayat').value;
+
+            if (!surahName || !totalAyat) {
+                showError(setoranStatus, "Nama Surah dan Jumlah Ayat wajib diisi.");
+                return;
+            }
+
+            setButtonLoading(setoranSubmitButton, true, 'Simpan');
+            clearError(setoranStatus);
+
+            try {
+                const reportData = {
+                    user_id: userProfile.user_id, // Ambil ID user dari state
+                    surah_name: surahName,
+                    total_ayat: parseInt(totalAyat, 10)
+                };
+                
+                // Kirim ke Supabase
+                const { error } = await supabase.from('report').insert([reportData]);
+                if (error) throw error;
+
+                // Sukses
+                hideSetoranModal();
+                showSetoranPage(); // Refresh daftar setoran untuk menampilkan data baru
+
+            } catch (err) {
+                console.error("Error saving report:", err);
+                showError(setoranStatus, "Gagal menyimpan: " + err.message);
+            } finally {
+                setButtonLoading(setoranSubmitButton, false, 'Simpan');
+            }
+        }
+
+        /**
+         * Menangani penghapusan laporan setoran
+         * @param {string} reportId 
+         * @param {HTMLButtonElement} button
+         */
+        async function handleDeleteReport(reportId, button) {
+            button.disabled = true;
+            // Tampilkan spinner kecil
+            button.innerHTML = '<div class="spinner mx-auto" style="width: 16px; height: 16px; border-left-color: #DC2626;"></div>';
+            
+            try {
+                const { error } = await supabase.from('report').delete().eq('id', reportId);
+                if (error) throw error;
+
+                // Sukses, hapus card dari DOM
+                const card = button.closest('.report-card');
+                if (card) {
+                    card.classList.add('opacity-0', 'transition-opacity', 'duration-300'); // Efek fade out
+                    setTimeout(() => {
+                        card.remove();
+                        // Cek jika ini card terakhir
+                        const remainingCards = document.querySelectorAll('.report-card');
+                        if (remainingCards.length === 0) {
+                            // Jika habis, refresh untuk memunculkan pesan "Belum ada setoran"
+                            showSetoranPage();
+                        }
+                    }, 300);
+                }
+
+            } catch (err) {
+                console.error("Error deleting report:", err);
+                // Gagal, kembalikan tombol
+                button.disabled = false;
+                button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>';
+            }
+        }
+
+        /**
+         * [ADMIN] Menampilkan semua laporan hafalan dari semua member
+         */
+        async function showAdminReportList() {
+            adminContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+
+            try {
+                // Ambil SEMUA report, join dengan nama profil
+                const { data, error } = await supabase
+                    .from('report')
+                    .select('*, profiles(name, phone_number)') // Join dengan tabel profiles
+                    .order('created_at', { ascending: false }); 
+
+                if (error) throw error;
+                
+                // --- Logika Rekapitulasi (untuk SEMUA member) ---
+                const totalAyat = data.reduce((acc, report) => acc + (report.total_ayat || 0), 0);
+                const uniqueSurahNames = new Set(data.map(report => report.surah_name));
+                const totalSuratUnik = uniqueSurahNames.size;
+                // --- Batas Logika ---
+
+                let reportCardsHTML = '';
+                if (data.length > 0) {
+                    reportCardsHTML = data.map(report => `
+                        <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200">
+                            <!-- Info Laporan -->
+                            <h3 class="text-lg font-semibold text-green-700">${report.surah_name} (${report.total_ayat} ayat)</h3>
+                            
+                            <!-- Info Member (Hasil Join) -->
+                            <p class="text-sm font-semibold text-gray-700 mt-2">
+                                ${report.profiles ? report.profiles.name : 'Nama Tidak Ditemukan'}
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                ${report.profiles ? report.profiles.phone_number : report.user_id}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Disetor: ${new Date(report.created_at).toLocaleString('id-ID')}
+                            </p>
+                        </div>
+                    `).join('');
+                } else {
+                    reportCardsHTML = `<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">Belum ada laporan setoran dari member.</div>`;
+                }
+
+                // Render konten
+                adminContent.innerHTML = `
+                    <button id="admin-back-button" class="text-green-600 mb-4 font-medium flex items-center hover:text-green-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        Kembali ke Panel Admin
+                    </button>
+                    <h2 class="text-lg font-bold text-gray-800 mb-4">Laporan Hafalan Seluruh Member</h2>
+                    
+                    <!-- Kartu Rekapitulasi Admin -->
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center">
+                            <p class="text-sm font-medium text-gray-500">Total Surat (Unik)</p>
+                            <p class="text-3xl font-bold text-purple-600">${totalSuratUnik}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center">
+                            <p class="text-sm font-medium text-gray-500">Total Ayat (Gabungan)</p>
+                            <p class="text-3xl font-bold text-purple-600">${totalAyat}</p>
+                        </div>
+                    </div>
+
+                    <!-- Daftar Laporan -->
+                    <div class="space-y-4">
+                        ${reportCardsHTML}
+                    </div>
+                `;
+
+                // Tambahkan listener untuk tombol kembali
+                document.getElementById('admin-back-button').addEventListener('click', showAdminEventList);
+
+            } catch (err) {
+                console.error("Error fetching admin reports:", err);
+                adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat laporan. Pastikan RLS Admin diaktifkan.</p>';
+            }
+        }
+
+        /**
          * Menangani check-in peserta
          * @param {string} registrationId - ID dari tabel 'registrations'
          * @param {HTMLButtonElement} button - Tombol yang diklik
@@ -1523,6 +2141,11 @@
             clearError(registerError); // Membersihkan error lama (jika ada)
         });
 
+        // --- Listener Navigasi Tab Utama ---
+        document.getElementById('nav-tab-kegiatan').addEventListener('click', showEventList);
+        document.getElementById('nav-tab-tahsin').addEventListener('click', showTahsinPage);
+        document.getElementById('nav-tab-setoran').addEventListener('click', showSetoranPage);
+
         document.getElementById('admin-nav-button').addEventListener('click', () => {
             if (userProfile && userProfile.role === 'admin') {
                 showAdminEventList(); // Muat konten admin
@@ -1548,9 +2171,19 @@
             } else if (action === 'edit-event') {
                 showEditEventForm(id);
             } else if (action === 'check-in') {
-            handleCheckIn(id, button);    
+            handleCheckIn(id, button);   
+            } else if (action === 'navigate-tahsin-list') {
+                showAdminTahsinList();
+            } else if (action === 'navigate-add-tahsin') {
+                showAddTahsinForm();
+            } else if (action === 'navigate-report-list') {
+                showAdminReportList();     
             }
         });
+
+            setoranForm.addEventListener('submit', handleAddSetoranSubmit);
+            document.getElementById('close-setoran-modal').addEventListener('click', hideSetoranModal);
+            setoranModalBackdrop.addEventListener('click', hideSetoranModal);
 
         /**
          * --- INISIALISASI APLIKASI UTAMA ---
