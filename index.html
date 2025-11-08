@@ -15,7 +15,7 @@
     
     <!-- INI YANG PALING PENTING (Gambar Preview) -->
     <!-- Saya menggunakan URL logo dari halaman login Anda -->
-    <meta property="og:image" content="https://blogger.googleusercontent.com/img/a/AVvXsEid4wwIrVHoeDIYodvpVWcZY1gTOTTpWlMOuUW6PcJZZiZmYI2Y4fdIt7D3SLaintqsIzpz95piaN8wbfjZ9tMly7VsnwAO-x_iOzfWRw6d0Am_zFdWa6M8RuGocnutTf0tGbXb-oVjkQDAwFIgqdHZVXI_cfzPrkOUbBxdl45M-ralE_Swuoj4FZDQ4GQ">
+    <meta property="og:image" content="https://blogger.googleusercontent.com/img/a/AVvXsEj73RW53O3BQuQdL07frUji9vbVo8MWkPBuNpWCV_GEMFglevINHdtpEfIMfHCkwlx7un1m7rCvEH1u7VzFZFVXgRvgd8JldQEO0c8WS5l9S41DOBYoUQ9J-BX4zmku9_DRipeMkNezZsgUtAIwEsEs6MgiblgrZ3pv1lNAMH-h2nTg3IG4t12Amwv570k">
     
     <!-- Anda bisa menentukan ukuran gambar (opsional, tapi disarankan) -->
     <meta property="og:image:width" content="500">
@@ -28,13 +28,12 @@
         /* Terapkan font default */
         body {
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #f3f4f6;
         }
         /* Kelas utilitas untuk menyembunyikan halaman */
         .page {
             display: none; /* Sembunyi secara default */
             width: 100%;
-            height: 100vh;
-            overflow-y: auto;
             flex-direction: column;
         }
         /* Tampilkan halaman yang aktif */
@@ -57,7 +56,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 h-screen overflow-hidden">
+<body class="bg-gray-100">
 
     <!-- 1. Halaman Loading -->
     <div id="loading-page" class="page active items-center justify-center bg-gray-100">
@@ -152,7 +151,7 @@
     <!-- 4. Halaman Aplikasi Utama (Member) -->
     <div id="main-app-page" class="page bg-gray-50 mx-auto max-w-lg shadow-lg">
         <!-- Header Aplikasi Member -->
-        <header class="bg-white p-4 shadow-md w-full flex-shrink-0">
+        <header class="sticky top-0 z-30 bg-white p-4 shadow-md w-full flex-shrink-0">
             <div class="flex justify-between items-center">
                 <h1 class="text-xl font-bold text-green-600">HAQI Ujungberung</h1>
 
@@ -177,7 +176,7 @@
             </div>
         </header>
 
-        <nav id="main-nav-tabs" class="bg-white shadow-sm w-full flex-shrink-0">
+        <nav id="main-nav-tabs" class="sticky top-[73px] z-20 bg-white shadow-sm w-full flex-shrink-0">
             <div class="flex justify-around border-b border-gray-200">
                 <!-- Tab 1: Kegiatan -->
                 <button id="nav-tab-kegiatan" class="nav-tab w-full py-3 px-4 text-center font-semibold text-green-600 border-b-2 border-green-600" data-tab="kegiatan">
@@ -203,7 +202,7 @@
     <!-- 5. Halaman Panel Admin -->
     <div id="admin-panel-page" class="page bg-gray-50 mx-auto max-w-lg shadow-lg">
         <!-- Header Aplikasi Admin -->
-        <header class="bg-green-700 text-white p-4 shadow-md w-full flex-shrink-0">
+        <header class="sticky top-0 z-30 bg-green-700 text-white p-4 shadow-md w-full flex-shrink-0">
         <div class="flex justify-between items-center">
 
         <!-- Grup Kiri: Tombol Kembali + Judul -->
@@ -1320,21 +1319,21 @@
                                 id="navigate-add-event"
                                 class="bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-blue-600 transition duration-300"
                             >
-                                +Event
+                                + Tambah Event
                         </button>
                         <button
                                 id="navigate-tahsin-list"
                                 data-action="navigate-tahsin-list" 
-                                class="bg-orange-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-orange-600 transition duration-300"
+                                class="w-full sm:w-auto bg-orange-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-orange-600 transition duration-300"
                             >
-                                Tahsin
+                                Kelola Tahsin
                         </button>
                         <button
                                 id="navigate-report-list"
                                 data-action="navigate-report-list" 
-                                class="bg-purple-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-purple-600 transition duration-300""
+                                class="w-full sm:w-auto bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-purple-700 transition"
                             >
-                                Hafalan
+                                Laporan Hafalan
                             </button>
                         </div>        
                     </div>
@@ -2217,6 +2216,3 @@
 
 </body>
 </html>
-
-
-
