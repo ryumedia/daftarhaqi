@@ -667,7 +667,7 @@
                     </div>`).join('') : `<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">Belum ada event yang dibuat.</div>`;
 
                 adminContent.innerHTML = `
-                    <div class="flex justify-between items-center mb-4"><button id="navigate-add-event" class="bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-blue-600 transition duration-300">+ Tambah Event</button><button id="navigate-tahsin-list" data-action="navigate-tahsin-list" class="w-full sm:w-auto bg-orange-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-orange-600 transition duration-300">Kelola Tahsin</button><button id="navigate-report-list" data-action="navigate-report-list" class="w-full sm:w-auto bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-purple-700 transition">Laporan Hafalan</button></div>
+                    <div class="flex justify-between items-center mb-4"><button id="navigate-add-event" class="bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-blue-600 transition duration-300">+ Event</button><button id="navigate-tahsin-list" data-action="navigate-tahsin-list" class="w-full sm:w-auto bg-orange-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-orange-600 transition duration-300">Tahsin</button><button id="navigate-report-list" data-action="navigate-report-list" class="w-full sm:w-auto bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-purple-700 transition">Hafalan</button></div>
                     <div class="space-y-4">${eventCardsHTML}</div>`;
                 document.getElementById('navigate-add-event').addEventListener('click', showAddEventForm);
             } catch (err) { console.error("Error fetching admin events:", err); adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat event.</p>'; }
@@ -800,17 +800,142 @@
             } catch (err) { console.error("Error saving event:", err); status.textContent = "Gagal menyimpan event: " + err.message; status.classList.remove('text-green-600'); status.classList.add('text-red-500'); setButtonLoading(button, false, 'Simpan Event'); }
         }
 
+        // --- UPDATED SHOW REGISTRATIONS (CARD & DOWNLOAD) ---
         async function showEventRegistrations(eventId, eventTitle) {
             adminContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
             try {
-                const { data, error } = await supabase.from('registrations').select('id, user_id, name, phone_number, registered_at, check_in, updated_at').eq('event_id', eventId).order('updated_at', { ascending: true });
+                // Fetch registrations joined with profiles to get Kecamatan/Kelurahan
+                const { data, error } = await supabase
+                    .from('registrations')
+                    .select('*, profiles(kecamatan, kelurahan)')
+                    .eq('event_id', eventId)
+                    .order('updated_at', { ascending: true });
+
                 if (error) throw error;
-                let participantListHTML = data.length > 0 ? data.map((reg, index) => `<li class="py-3 px-4 border-b border-gray-200 flex items-center justify-between"><div class="flex items-center"><span class="text-sm font-medium text-gray-500 w-8">${index + 1}.</span><div><p class="font-semibold text-gray-800">${reg.name}</p><p class="text-sm text-gray-600">${reg.phone_number}</p><p class="text-xs text-gray-500 mt-1" id="updated-at-${reg.id}">Updated: ${new Date(reg.updated_at || reg.registered_at).toLocaleString('id-ID')}</p></div></div><div class="flex-shrink-0">${reg.check_in === 'Hadir' ? `<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Hadir</span>` : `<button data-action="check-in" data-id="${reg.id}" class="check-in-button bg-green-500 text-white py-1 px-3 rounded-lg text-sm font-semibold hover:bg-green-600 transition">Check In</button>`}</div></li>`).join('') : '<li class="p-4 text-center text-gray-500">Belum ada peserta terdaftar.</li>';
-                adminContent.innerHTML = `<button id="admin-back-button" class="text-green-600 mb-4 font-medium flex items-center hover:text-green-800 transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>Kembali ke Daftar Kegiatan</button><div class="bg-white p-6 rounded-lg shadow-inner border"><div class="flex justify-between items-center mb-4"><div><h2 class="text-2xl font-bold text-gray-800 mb-2">Peserta Event</h2><p class="text-lg text-gray-600">${eventTitle}</p></div><button id="scan-qr-button" class="bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-blue-700 transition duration-300 flex items-center">Scan QR</button></div><div id="qr-scanner-container" class="hidden my-4 p-4 border rounded-lg bg-gray-100"><div id="qr-reader" style="width: 100%;"></div><p id="qr-scan-feedback" class="text-center text-sm font-medium mt-2"></p><button id="close-qr-scanner" class="w-full mt-2 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600">Tutup Scanner</button></div><ul class="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">${participantListHTML}</ul></div>`;
+
+                // 1. Build List HTML
+                let participantListHTML = data.length > 0 ? data.map((reg, index) => {
+                    // Extract Profile Data
+                    const kecamatan = reg.profiles ? reg.profiles.kecamatan : '-';
+                    const kelurahan = reg.profiles ? reg.profiles.kelurahan : '-';
+
+                    return `
+                    <li class="py-3 px-4 border-b border-gray-200 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-sm font-medium text-gray-500 w-8">${index + 1}.</span>
+                            <div>
+                                <p class="font-semibold text-gray-800">${reg.name}</p>
+                                <p class="text-xs text-gray-500">${reg.phone_number}</p>
+                                <p class="text-xs text-gray-400 mt-1">${kelurahan}, ${kecamatan}</p>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            ${reg.check_in === 'Hadir' 
+                                ? `<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Hadir</span>` 
+                                : `<button data-action="check-in" data-id="${reg.id}" class="check-in-button bg-green-500 text-white py-1 px-3 rounded-lg text-sm font-semibold hover:bg-green-600 transition">Check In</button>`}
+                        </div>
+                    </li>`;
+                }).join('') : '<li class="p-4 text-center text-gray-500">Belum ada peserta terdaftar.</li>';
+
+                // 2. Render Full View
+                adminContent.innerHTML = `
+                    <button id="admin-back-button" class="text-green-600 mb-4 font-medium flex items-center hover:text-green-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        Kembali
+                    </button>
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-inner border">
+                        <div class="mb-4">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-1">Peserta Event</h2>
+                            <p class="text-lg text-gray-600 mb-4">${eventTitle}</p>
+                            
+                            <!-- CARD STATISTIK (POSISI BARU SCAN QR DIGANTI INI) -->
+                            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg flex flex-col items-center justify-center mb-6">
+                                <p class="text-sm text-blue-600 font-semibold uppercase tracking-wide">Total Peserta Registrasi</p>
+                                <p class="text-4xl font-bold text-blue-800 mt-1">${data.length}</p>
+                            </div>
+
+                            <!-- TOMBOL SCAN & DOWNLOAD -->
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <button id="scan-qr-button" class="bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold shadow hover:bg-blue-700 transition flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+                                    Scan QR
+                                </button>
+                                <button id="download-csv-button" class="bg-green-600 text-white py-3 px-4 rounded-lg font-semibold shadow hover:bg-green-700 transition flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                    Download Data
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- SCANNER AREA -->
+                        <div id="qr-scanner-container" class="hidden my-4 p-4 border rounded-lg bg-gray-100">
+                            <div id="qr-reader" style="width: 100%;"></div>
+                            <p id="qr-scan-feedback" class="text-center text-sm font-medium mt-2"></p>
+                            <button id="close-qr-scanner" class="w-full mt-2 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600">Tutup Scanner</button>
+                        </div>
+
+                        <!-- LIST PESERTA -->
+                        <ul class="bg-gray-50 rounded-lg overflow-hidden border border-gray-200 divide-y divide-gray-200">
+                            ${participantListHTML}
+                        </ul>
+                    </div>`;
+
+                // 3. Event Listeners
                 document.getElementById('admin-back-button').addEventListener('click', showAdminEventList);
                 document.getElementById('scan-qr-button').addEventListener('click', () => { startQrScanner(data); });
                 document.getElementById('close-qr-scanner').addEventListener('click', stopQrScanner);
-            } catch (err) { console.error("Error fetching registrations:", err); adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat data peserta.</p>'; }
+                
+                // 4. Download Handler
+                document.getElementById('download-csv-button').addEventListener('click', () => {
+                    downloadParticipantsCSV(data, eventTitle);
+                });
+
+            } catch (err) { 
+                console.error("Error fetching registrations:", err); 
+                adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat data peserta.</p>'; 
+            }
+        }
+        
+        // --- CSV DOWNLOAD FUNCTION ---
+        function downloadParticipantsCSV(data, eventTitle) {
+            if (!data || data.length === 0) {
+                alert("Tidak ada data peserta untuk diunduh.");
+                return;
+            }
+
+            // CSV Header
+            let csvContent = "No,Nama Lengkap,Nomor WA,Kecamatan,Kelurahan,Status Check-in\n";
+
+            data.forEach((reg, index) => {
+                // Bersihkan data dari koma agar CSV tidak rusak
+                const name = reg.name ? reg.name.replace(/,/g, " ") : "";
+                // Format nomor WA agar terbaca sebagai teks di Excel (tambah tanda kutip satu)
+                const phone = reg.phone_number ? `'${reg.phone_number}` : "";
+                
+                // Ambil data dari join profiles
+                const kec = reg.profiles ? reg.profiles.kecamatan : "-";
+                const kel = reg.profiles ? reg.profiles.kelurahan : "-";
+                const status = reg.check_in || "Belum Hadir";
+
+                const row = `${index + 1},"${name}",${phone},${kec},${kel},${status}`;
+                csvContent += row + "\n";
+            });
+
+            // Create Blob
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create Download Link
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            const fileName = `Peserta_${eventTitle.replace(/[^a-zA-Z0-9]/g, '_')}.csv`;
+            link.setAttribute("download", fileName);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         async function showEditEventForm(eventId) {
