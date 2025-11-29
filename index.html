@@ -679,9 +679,52 @@
                     </div>`).join('') : `<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">Belum ada event yang dibuat.</div>`;
 
                 adminContent.innerHTML = `
-                    <div class="flex justify-between items-center mb-4"><button id="navigate-add-event" class="bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-blue-600 transition duration-300">+ Tambah Event</button><button id="navigate-tahsin-list" data-action="navigate-tahsin-list" class="w-full sm:w-auto bg-orange-500 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-orange-600 transition duration-300">Kelola Tahsin</button><button id="navigate-report-list" data-action="navigate-report-list" class="w-full sm:w-auto bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-purple-700 transition">Laporan Hafalan</button></div>
+                    <div class="grid grid-cols-4 gap-2 mb-6">
+                        <!-- 1. Tombol Tambah Event -->
+                        <button id="navigate-add-event" class="flex flex-col items-center justify-center p-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition h-20">
+                            <div class="bg-blue-100 p-2 rounded-full mb-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </div>
+                            <span class="text-[10px] font-semibold text-gray-700 text-center leading-tight">Buat Event</span>
+                        </button>
+
+                        <!-- 2. Tombol Tahsin -->
+                        <button id="navigate-tahsin-list" data-action="navigate-tahsin-list" class="flex flex-col items-center justify-center p-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-orange-50 hover:border-orange-300 transition h-20">
+                            <div class="bg-orange-100 p-2 rounded-full mb-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                            </div>
+                            <span class="text-[10px] font-semibold text-gray-700 text-center leading-tight">Tahsin</span>
+                        </button>
+
+                        <!-- 3. Tombol Laporan Hafalan -->
+                        <button id="navigate-report-list" data-action="navigate-report-list" class="flex flex-col items-center justify-center p-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-purple-50 hover:border-purple-300 transition h-20">
+                            <div class="bg-purple-100 p-2 rounded-full mb-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                </svg>
+                            </div>
+                            <span class="text-[10px] font-semibold text-gray-700 text-center leading-tight">Laporan</span>
+                        </button>
+
+                        <!-- 4. Tombol User (BARU) -->
+                        <button id="navigate-user-list" data-action="navigate-user-list" class="flex flex-col items-center justify-center p-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-teal-50 hover:border-teal-300 transition h-20">
+                            <div class="bg-teal-100 p-2 rounded-full mb-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            </div>
+                            <span class="text-[10px] font-semibold text-gray-700 text-center leading-tight">Data User</span>
+                        </button>
+                    </div>
                     <div class="space-y-4">${eventCardsHTML}</div>`;
                 document.getElementById('navigate-add-event').addEventListener('click', showAddEventForm);
+                
+                document.getElementById('navigate-user-list').addEventListener('click', showAdminUserList);
+
             } catch (err) { console.error("Error fetching admin events:", err); adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat event.</p>'; }
         }
 
@@ -1072,12 +1115,35 @@
             const button = e.target.closest('button'); if (!button) return;
             const action = button.dataset.action; const id = button.dataset.id;
             
+            // FUNGSI MANAGE USER
             if (action === 'view-registrations') { const title = decodeURIComponent(button.dataset.title); showEventRegistrations(id, title); } 
             else if (action === 'edit-event') { showEditEventForm(id); } 
             else if (action === 'check-in') { handleCheckIn(id, button); } 
             else if (action === 'navigate-tahsin-list') { showAdminTahsinList(); } 
             else if (action === 'navigate-add-tahsin') { showAddTahsinForm(); } 
             else if (action === 'navigate-report-list') { showAdminReportList(); }
+
+            if (action === 'navigate-user-list') { 
+                showAdminUserList(); 
+            } 
+            else if (action === 'edit-user') { 
+                showEditUserForm(id); 
+            } 
+            else if (action === 'delete-user') {
+                const name = button.dataset.name;
+                if(confirm(`Yakin ingin menghapus user "${name}"? Data hafalan dan registrasi user ini juga mungkin akan terhapus.`)) {
+                    try {
+                        const { error } = await supabase.from('profiles').delete().eq('id', id);
+                        if (error) throw error;
+                        // Refresh list
+                        showAdminUserList();
+                    } catch(err) {
+                        alert("Gagal menghapus user: " + err.message);
+                    }
+                }
+            }
+
+            // FUNGSI MANAGE RUNDOWN
             else if (action === 'manage-rundown') { const title = decodeURIComponent(button.dataset.title); showEventRundownManager(id, title); }
             else if (action === 'delete-rundown') {
                 if(!confirm('Yakin ingin menghapus agenda ini?')) return;
@@ -1129,6 +1195,266 @@
             } else { showPage('login-page'); }
         }
         document.addEventListener('DOMContentLoaded', initializeApp);
+
+        //KUMPULAN FUNGSI MANAJEMEN USER
+
+        async function showAdminUserList() {
+            adminContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            try {
+                // Ambil semua data profil, urutkan berdasarkan nama
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .order('name', { ascending: true });
+
+                if (error) throw error;
+
+                let userListHTML = '';
+                
+                if (data.length > 0) {
+                    userListHTML = data.map((user, index) => {
+                        // Tentukan warna badge untuk role
+                        const roleBadgeColor = user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800';
+                        
+                        return `
+                        <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200 mb-3 relative">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-lg font-bold text-gray-800">${user.name}</h3>
+                                        <span class="text-xs px-2 py-0.5 rounded-full font-bold uppercase ${roleBadgeColor}">${user.role || 'user'}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1">📞 ${user.phone_number}</p>
+                                    <p class="text-xs text-gray-500 mt-1">📍 ${user.kelurahan}, ${user.kecamatan}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex justify-end space-x-2 border-t pt-3">
+                                <button data-action="edit-user" data-id="${user.id}" class="text-blue-600 hover:text-blue-800 text-sm font-semibold flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg> 
+                                    Edit
+                                </button>
+                                <button data-action="delete-user" data-id="${user.id}" data-name="${user.name}" class="text-red-600 hover:text-red-800 text-sm font-semibold flex items-center ml-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    Hapus
+                                </button>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    userListHTML = `<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">Belum ada data user.</div>`;
+                }
+
+                adminContent.innerHTML = `
+                    <button id="admin-back-button" class="text-green-600 mb-4 font-medium flex items-center hover:text-green-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        Kembali ke Panel Admin
+                    </button>
+                    
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Data User (${data.length})</h2>
+                        <button id="add-user-btn" class="bg-teal-600 text-white py-2 px-4 rounded-lg font-semibold shadow hover:bg-teal-700 transition duration-300 text-sm">
+                            + Tambah User
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        ${userListHTML}
+                    </div>`;
+
+                // Event Listeners
+                document.getElementById('admin-back-button').addEventListener('click', showAdminEventList);
+                document.getElementById('add-user-btn').addEventListener('click', showAddUserForm);
+
+            } catch (err) {
+                console.error("Error fetching users:", err);
+                adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat data user.</p>';
+            }
+        }
+
+        function showAddUserForm() {
+            adminContent.innerHTML = `
+                <button id="back-to-users" class="text-teal-600 mb-4 font-medium flex items-center hover:text-teal-800 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    Kembali ke Data User
+                </button>
+                
+                <form id="add-user-form" class="bg-white p-6 rounded-lg shadow-inner border space-y-4">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Tambah User Baru</h2>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                        <input type="text" name="name" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500" />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nomor WA</label>
+                        <input type="tel" name="phone_number" required placeholder="08..." class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Kecamatan</label>
+                            <input type="text" name="kecamatan" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Kelurahan</label>
+                            <input type="text" name="kelurahan" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Role</label>
+                        <select name="role" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500">
+                            <option value="user">User (Member)</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+
+                    <p id="user-form-status" class="text-sm text-center"></p>
+                    <button id="save-user-btn" type="submit" class="w-full bg-teal-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:bg-teal-700 transition duration-300">
+                        Simpan User
+                    </button>
+                </form>`;
+
+            document.getElementById('back-to-users').addEventListener('click', showAdminUserList);
+            document.getElementById('add-user-form').addEventListener('submit', handleAddUserSubmit);
+        }
+
+        async function handleAddUserSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('save-user-btn');
+            const status = document.getElementById('user-form-status');
+            
+            setButtonLoading(btn, true, 'Simpan User');
+            status.textContent = '';
+
+            const formData = new FormData(e.target);
+            // Generate random UUID untuk user_id
+            const newUserId = crypto.randomUUID();
+
+            const userData = {
+                user_id: newUserId,
+                name: formData.get('name'),
+                phone_number: formData.get('phone_number'),
+                kecamatan: formData.get('kecamatan'),
+                kelurahan: formData.get('kelurahan'),
+                role: formData.get('role'),
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                const { error } = await supabase.from('profiles').insert([userData]);
+                if (error) {
+                    if (error.code === '23505') throw new Error("Nomor WA sudah terdaftar.");
+                    throw error;
+                }
+                
+                status.textContent = 'User berhasil ditambahkan!';
+                status.className = 'text-sm text-center text-green-600';
+                setTimeout(showAdminUserList, 1500);
+            } catch (err) {
+                status.textContent = 'Gagal: ' + err.message;
+                status.className = 'text-sm text-center text-red-500';
+                setButtonLoading(btn, false, 'Simpan User');
+            }
+        }
+
+        async function showEditUserForm(id) {
+            adminContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            try {
+                // Ambil data user berdasarkan ID (Primary Key tabel profiles adalah 'id', bukan 'user_id' untuk update)
+                const { data: user, error } = await supabase.from('profiles').select('*').eq('id', id).single();
+                if (error) throw error;
+
+                adminContent.innerHTML = `
+                    <button id="back-to-users" class="text-teal-600 mb-4 font-medium flex items-center hover:text-teal-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        Batal Edit
+                    </button>
+                    
+                    <form id="edit-user-form" data-id="${user.id}" class="bg-white p-6 rounded-lg shadow-inner border space-y-4">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Edit User</h2>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                            <input type="text" name="name" value="${user.name}" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500" />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nomor WA</label>
+                            <input type="tel" name="phone_number" value="${user.phone_number}" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500" />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Kecamatan</label>
+                                <input type="text" name="kecamatan" value="${user.kecamatan}" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Kelurahan</label>
+                                <input type="text" name="kelurahan" value="${user.kelurahan}" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Role</label>
+                            <select name="role" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500">
+                                <option value="user" ${user.role === 'user' ? 'selected' : ''}>User (Member)</option>
+                                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                            </select>
+                        </div>
+
+                        <p id="user-form-status" class="text-sm text-center"></p>
+                        <button id="save-user-btn" type="submit" class="w-full bg-teal-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:bg-teal-700 transition duration-300">
+                            Update User
+                        </button>
+                    </form>`;
+
+                document.getElementById('back-to-users').addEventListener('click', showAdminUserList);
+                document.getElementById('edit-user-form').addEventListener('submit', handleEditUserSubmit);
+
+            } catch (err) {
+                console.error(err);
+                adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat data user.</p>';
+            }
+        }
+
+        async function handleEditUserSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const id = form.dataset.id;
+            const btn = document.getElementById('save-user-btn');
+            const status = document.getElementById('user-form-status');
+            
+            setButtonLoading(btn, true, 'Update User');
+            status.textContent = '';
+
+            const formData = new FormData(form);
+            const updates = {
+                name: formData.get('name'),
+                phone_number: formData.get('phone_number'),
+                kecamatan: formData.get('kecamatan'),
+                kelurahan: formData.get('kelurahan'),
+                role: formData.get('role')
+            };
+
+            try {
+                const { error } = await supabase.from('profiles').update(updates).eq('id', id);
+                if (error) throw error;
+                
+                status.textContent = 'Data berhasil diperbarui!';
+                status.className = 'text-sm text-center text-green-600';
+                setTimeout(showAdminUserList, 1500);
+            } catch (err) {
+                status.textContent = 'Gagal update: ' + err.message;
+                status.className = 'text-sm text-center text-red-500';
+                setButtonLoading(btn, false, 'Update User');
+            }
+        }
+
+
+
     </script>
 </body>
 </html>
