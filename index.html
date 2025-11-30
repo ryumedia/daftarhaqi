@@ -49,6 +49,11 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Custom scrollbar untuk iframe container jika perlu */
+        iframe {
+            border: none;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -174,16 +179,20 @@
         <nav id="main-nav-tabs" class="sticky top-[64px] z-20 bg-white shadow-sm w-full flex-shrink-0">
             <div class="flex justify-around border-b border-gray-200">
                 <!-- Tab 1: Kegiatan -->
-                <button id="nav-tab-kegiatan" class="nav-tab w-full py-3 px-4 text-center font-semibold text-green-600 border-b-2 border-green-600" data-tab="kegiatan">
+                <button id="nav-tab-kegiatan" class="nav-tab w-full py-3 px-2 text-center font-semibold text-green-600 border-b-2 border-green-600 text-sm sm:text-base" data-tab="kegiatan">
                     Kegiatan
                 </button>
                 <!-- Tab 2: Tahsin -->
-                <button id="nav-tab-tahsin" class="nav-tab w-full py-3 px-4 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-green-600 hover:border-gray-300" data-tab="tahsin">
+                <button id="nav-tab-tahsin" class="nav-tab w-full py-3 px-2 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-green-600 hover:border-gray-300 text-sm sm:text-base" data-tab="tahsin">
                     Tahsin
                 </button>
                 <!-- Tab 3: Setoran -->
-                <button id="nav-tab-setoran" class="nav-tab w-full py-3 px-4 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-green-600 hover:border-gray-300" data-tab="setoran">
+                <button id="nav-tab-setoran" class="nav-tab w-full py-3 px-2 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-green-600 hover:border-gray-300 text-sm sm:text-base" data-tab="setoran">
                     Hafalan
+                </button>
+                <!-- Tab 4: Laporan (BARU) -->
+                <button id="nav-tab-laporan" class="nav-tab w-full py-3 px-2 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-green-600 hover:border-gray-300 text-sm sm:text-base" data-tab="laporan">
+                    Laporan
                 </button>
             </div>
         </nav>
@@ -261,6 +270,10 @@
     <script type="module">
         import QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm';
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        // --- Konfigurasi URL Laporan Eksternal ---
+        // GANTI URL DI BAWAH INI SESUAI KEINGINAN ANDA
+        const EXTERNAL_REPORT_URL = 'https://ryumedia.github.io/laporanhaqi/'; 
 
         // --- Konfigurasi Supabase ---
         const SUPABASE_URL = 'https://qupxxrvpeuvfmmgrmxsa.supabase.co';
@@ -524,6 +537,24 @@
                 mainContent.innerHTML = `<div class="flex justify-between items-center mb-4"><h2 class="text-lg font-bold text-gray-800">Laporan Hafalan</h2><button id="add-setoran-button" class="bg-orange-600 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-orange-700 transition duration-300">+ Tambah Hafalan</button></div><div class="grid grid-cols-2 gap-4 mb-4"><div class="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center"><p class="text-sm font-medium text-gray-500">Total Surat Dihafal</p><p class="text-3xl font-bold text-green-600">${totalSuratUnik}</p></div><div class="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center"><p class="text-sm font-medium text-gray-500">Total Ayat Dihafal</p><p class="text-3xl font-bold text-green-600">${totalAyat}</p></div></div><div class="space-y-4">${reportCardsHTML}</div>`;
                 document.getElementById('add-setoran-button').addEventListener('click', showSetoranModal);
             } catch (err) { console.error("Error fetching reports:", err); mainContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat laporan setoran.</p>'; }
+        }
+
+        // --- FUNGSI HALAMAN LAPORAN (BARU) ---
+        function showLaporanPage() {
+            document.getElementById('main-nav-tabs').classList.remove('hidden');
+            setActiveTab('laporan');
+            
+            // Render Iframe
+            mainContent.innerHTML = `
+                <div class="w-full h-full flex flex-col" style="min-height: 80vh;">
+                    <iframe 
+                        src="${EXTERNAL_REPORT_URL}" 
+                        class="w-full flex-1 border-0 rounded-lg shadow-sm bg-white" 
+                        style="min-height: 100%;" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            `;
         }
 
         async function showEventDetail_v2(eventId) {
@@ -1018,7 +1049,28 @@
             adminContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
             try {
                 const { data, error } = await supabase.from('course').select('*').order('created_at', { ascending: false }); if (error) throw error;
-                let courseCardsHTML = data.length > 0 ? data.map(course => `<div class="bg-white p-4 rounded-lg shadow-md border border-gray-200"><h3 class="text-lg font-semibold text-green-700 mb-1">${course.course_title}</h3><p class="text-sm text-gray-500 mb-2">Dibuat: ${new Date(course.created_at).toLocaleString('id-ID')}</p><p class="text-sm text-gray-700 line-clamp-2 mb-3">${course.description || 'Tidak ada deskripsi.'}</p>${course.course_link ? `<a href="${course.course_link}" target="_blank" rel="noopener noreferrer" class="inline-block w-full text-center bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-green-700 transition">Buka Materi</a>` : `<span class="inline-block w-full text-center bg-gray-300 text-gray-600 py-2 px-3 rounded-lg text-sm font-semibold cursor-not-allowed">Materi Belum Tersedia</span>`}</div>`).join('') : `<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">Belum ada materi tahsin.</div>`;
+
+                let courseCardsHTML = data.length > 0 ? data.map(course => `
+                    <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200 relative">
+                        <h3 class="text-lg font-semibold text-green-700 mb-1 pr-16">${course.course_title}</h3>
+                        <p class="text-sm text-gray-500 mb-2">Dibuat: ${new Date(course.created_at).toLocaleString('id-ID')}</p>
+                        <p class="text-sm text-gray-700 line-clamp-2 mb-3">${course.description || 'Tidak ada deskripsi.'}</p>
+                        
+                        <div class="flex justify-between items-center mt-2">
+                            ${course.course_link ? `<a href="${course.course_link}" target="_blank" rel="noopener noreferrer" class="text-green-600 hover:underline text-sm font-semibold">Buka Link Materi</a>` : `<span class="text-xs text-gray-400">Tanpa Link</span>`}
+                            
+                            <div class="flex space-x-2">
+                                <button data-action="edit-tahsin" data-id="${course.id}" class="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Edit Materi">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                </button>
+                                <button data-action="delete-tahsin" data-id="${course.id}" class="p-1 text-red-600 hover:bg-red-50 rounded" title="Hapus Materi">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>`).join('') 
+                    : `<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">Belum ada materi tahsin.</div>`;
+
                 adminContent.innerHTML = `<button id="admin-back-button" class="text-green-600 mb-4 font-medium flex items-center hover:text-green-800 transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>Kembali ke Panel Admin</button><div class="flex justify-between items-center mb-4"><h2 class="text-lg font-bold text-gray-800">Materi Tahsin</h2><button id="navigate-add-tahsin" data-action="navigate-add-tahsin" class="bg-green-600 text-white py-2 px-4 rounded-lg font-semibold shadow-lg hover:bg-green-700 transition duration-300">+ Tambah</button></div><div class="space-y-4">${courseCardsHTML}</div>`;
                 document.getElementById('admin-back-button').addEventListener('click', showAdminEventList);
             } catch (err) { console.error("Error fetching admin courses:", err); adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat materi tahsin.</p>'; }
@@ -1038,6 +1090,87 @@
                 status.textContent = 'Materi berhasil ditambahkan!'; status.classList.remove('text-red-500'); status.classList.add('text-green-600');
                 setTimeout(() => { showAdminTahsinList(); }, 2000);
             } catch (err) { console.error("Error saving course:", err); status.textContent = "Gagal menyimpan materi: " + err.message; status.classList.remove('text-green-600'); status.classList.add('text-red-500'); setButtonLoading(button, false, 'Simpan Materi'); }
+        }
+
+        // --- Fungsi Edit Tahsin ---
+
+        async function showEditTahsinForm(id) {
+            adminContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            try {
+                // Ambil data course berdasarkan ID
+                const { data: course, error } = await supabase.from('course').select('*').eq('id', id).single();
+                if (error) throw error;
+
+                adminContent.innerHTML = `
+                    <button id="admin-back-tahsin-button" class="text-green-600 mb-4 font-medium flex items-center hover:text-green-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        Batal Edit
+                    </button>
+                    
+                    <form id="edit-tahsin-form" data-id="${course.id}" class="bg-white p-6 rounded-lg shadow-inner border space-y-4">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Edit Materi Tahsin</h2>
+                        
+                        <div>
+                            <label for="course-title" class="block text-sm font-medium text-gray-700">Nama Tahsin (Judul)</label>
+                            <input type="text" name="course_title" id="course-title" value="${course.course_title}" required class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                        </div>
+                        
+                        <div>
+                            <label for="course-description" class="block text-sm font-medium text-gray-700">Deskripsi</label>
+                            <textarea name="description" id="course-description" rows="4" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500">${course.description || ''}</textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="course-link" class="block text-sm font-medium text-gray-700">Link Materi</label>
+                            <input type="text" name="course_link" id="course-link" value="${course.course_link || ''}" class="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                        </div>
+                        
+                        <p id="edit-tahsin-status" class="text-sm text-center"></p>
+                        <button id="edit-tahsin-button" type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:bg-green-700 transition duration-300">
+                            Update Materi
+                        </button>
+                    </form>`;
+
+                document.getElementById('admin-back-tahsin-button').addEventListener('click', showAdminTahsinList);
+                document.getElementById('edit-tahsin-form').addEventListener('submit', handleEditTahsinSubmit);
+
+            } catch (err) {
+                console.error("Error loading tahsin for edit:", err);
+                adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat data materi.</p>';
+            }
+        }
+
+        async function handleEditTahsinSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const id = form.dataset.id;
+            const button = document.getElementById('edit-tahsin-button');
+            const status = document.getElementById('edit-tahsin-status');
+
+            setButtonLoading(button, true, 'Update Materi');
+            status.textContent = '';
+
+            try {
+                const formData = new FormData(form);
+                const updates = {
+                    course_title: formData.get('course_title'),
+                    description: formData.get('description'),
+                    course_link: formData.get('course_link')
+                };
+
+                const { error } = await supabase.from('course').update(updates).eq('id', id);
+                if (error) throw error;
+
+                status.textContent = 'Materi berhasil diperbarui!';
+                status.className = 'text-sm text-center text-green-600';
+                setTimeout(showAdminTahsinList, 1500);
+
+            } catch (err) {
+                console.error("Error updating tahsin:", err);
+                status.textContent = "Gagal update: " + err.message;
+                status.className = 'text-sm text-center text-red-500';
+                setButtonLoading(button, false, 'Update Materi');
+            }
         }
 
         async function handleAddSetoranSubmit(e) {
@@ -1104,9 +1237,13 @@
         loginForm.addEventListener('submit', handleLogin);
         registerForm.addEventListener('submit', handleRegister);
         document.getElementById('back-to-login-button').addEventListener('click', () => { showPage('login-page'); clearError(loginError); clearError(registerError); });
+        
         document.getElementById('nav-tab-kegiatan').addEventListener('click', showEventList);
         document.getElementById('nav-tab-tahsin').addEventListener('click', showTahsinPage);
         document.getElementById('nav-tab-setoran').addEventListener('click', showSetoranPage);
+        // Tambahkan Listener untuk Tab Laporan
+        document.getElementById('nav-tab-laporan').addEventListener('click', showLaporanPage);
+
         document.getElementById('admin-nav-button').addEventListener('click', () => { if (userProfile && userProfile.role === 'admin') { showAdminEventList(); showPage('admin-panel-page'); } });    
         document.getElementById('admin-back-to-member-button').addEventListener('click', () => { showEventList(); showPage('main-app-page'); });
         
@@ -1142,6 +1279,21 @@
                     }
                 }
             }
+
+            else if (action === 'edit-tahsin') {
+        showEditTahsinForm(id);
+    }
+    else if (action === 'delete-tahsin') {
+        if(confirm('Yakin ingin menghapus materi tahsin ini?')) {
+            try {
+                const { error } = await supabase.from('course').delete().eq('id', id);
+                if (error) throw error;
+                showAdminTahsinList(); // Refresh list
+            } catch(err) {
+                alert('Gagal menghapus materi: ' + err.message);
+            }
+        }
+    }
 
             // FUNGSI MANAGE RUNDOWN
             else if (action === 'manage-rundown') { const title = decodeURIComponent(button.dataset.title); showEventRundownManager(id, title); }
