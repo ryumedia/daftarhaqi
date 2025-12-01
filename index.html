@@ -593,15 +593,26 @@
                     `).join('');
 
                     rundownHTML = `
-                        <div class="mt-8 border-t pt-6">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                Susunan Acara
-                            </h3>
-                            <div class="ml-2">
-                                ${listItems}
+                        <details class="mt-6 group bg-white border border-gray-200 rounded-lg shadow-sm open:ring-1 open:ring-green-200 transition-all duration-300">
+                            <summary class="list-none flex justify-between items-center p-4 cursor-pointer bg-gray-50 rounded-lg group-open:rounded-b-none group-open:bg-green-50 hover:bg-green-50 transition">
+                                <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                    </svg>
+                                    Susunan Acara
+                                </h3>
+                                <span class="transform group-open:rotate-180 transition-transform duration-300 text-green-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                            </summary>
+                            <div class="p-4 border-t border-gray-100 bg-white">
+                                <div class="ml-2">
+                                    ${listItems}
+                                </div>
                             </div>
-                        </div>
+                        </details>
                     `;
                 }
 
@@ -628,7 +639,14 @@
                             <h1 class="text-3xl font-bold text-gray-800 mb-3">${event.title}</h1>
                             <p class="text-gray-600 text-lg mb-2"><span class="font-semibold">Tanggal:</span> ${formatDate(event.date)}</p>
                             <p class="text-gray-600 text-lg mb-4"><span class="font-semibold">Lokasi:</span> ${event.location}</p>
-                            ${event.google_map_link ? `<a href="${event.google_map_link}" target="_blank" rel="noopener noreferrer" class="text-green-600 hover:underline mb-4 inline-block">Lihat Peta Google</a>` : ''}
+                            ${event.google_map_link ? `
+                            <a href="${event.google_map_link}" target="_blank" rel="noopener noreferrer" 
+                            class="mb-4 mt-2 flex items-center justify-center w-full px-4 py-3 border-2 border-green-600 text-green-700 rounded-lg hover:bg-green-50 transition font-bold shadow-sm group">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                                </svg>
+                                Lihat Lokasi di Peta
+                            </a>` : ''}
                             <p class="text-gray-700 mb-6">${event.description}</p>
                             
                             <!-- RUNDOWN SECTION -->
@@ -1190,17 +1208,192 @@
             } catch (err) { console.error("Error deleting report:", err); button.disabled = false; button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>'; }
         }
 
-        async function showAdminReportList() {
+        async function showAdminReportList(startDate = '', endDate = '') {
             adminContent.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            
             try {
-                const { data, error } = await supabase.from('report').select('*, profiles(name, phone_number)').order('created_at', { ascending: false }); if (error) throw error;
-                const totalAyat = data.reduce((acc, report) => acc + (report.total_ayat || 0), 0);
-                const uniqueSurahNames = new Set(data.map(report => report.surah_name));
-                const totalSuratUnik = uniqueSurahNames.size;
-                let reportCardsHTML = data.length > 0 ? data.map(report => `<div class="bg-white p-4 rounded-lg shadow-md border border-gray-200"><h3 class="text-lg font-semibold text-green-700">${report.surah_name} (${report.total_ayat} ayat)</h3><p class="text-sm font-semibold text-gray-700 mt-2">${report.profiles ? report.profiles.name : 'Nama Tidak Ditemukan'}</p><p class="text-sm text-gray-600">${report.profiles ? report.profiles.phone_number : report.user_id}</p><p class="text-xs text-gray-500 mt-1">Disetor: ${new Date(report.created_at).toLocaleString('id-ID')}</p></div>`).join('') : `<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">Belum ada laporan setoran dari member.</div>`;
-                adminContent.innerHTML = `<button id="admin-back-button" class="text-green-600 mb-4 font-medium flex items-center hover:text-green-800 transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>Kembali ke Panel Admin</button><h2 class="text-lg font-bold text-gray-800 mb-4">Laporan Hafalan Seluruh Member</h2><div class="grid grid-cols-2 gap-4 mb-4"><div class="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center"><p class="text-sm font-medium text-gray-500">Total Surat (Unik)</p><p class="text-3xl font-bold text-purple-600">${totalSuratUnik}</p></div><div class="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center"><p class="text-sm font-medium text-gray-500">Total Ayat (Gabungan)</p><p class="text-3xl font-bold text-purple-600">${totalAyat}</p></div></div><div class="space-y-4">${reportCardsHTML}</div>`;
+                // 1. Build Query dengan Filter Tanggal
+                let query = supabase
+                    .from('report')
+                    .select('*, profiles(name, phone_number)')
+                    .order('created_at', { ascending: false });
+
+                if (startDate) {
+                    query = query.gte('created_at', startDate + 'T00:00:00');
+                }
+                if (endDate) {
+                    query = query.lte('created_at', endDate + 'T23:59:59');
+                }
+
+                const { data, error } = await query;
+                if (error) throw error;
+
+                // 2. Hitung Statistik Global
+                const totalAyatGlobal = data.reduce((acc, report) => acc + (report.total_ayat || 0), 0);
+                const uniqueSurahNamesGlobal = new Set(data.map(report => report.surah_name));
+                
+                // 3. Proses Agregasi Data User untuk TOP 3
+                // Kita butuh mengelompokkan laporan berdasarkan user_id
+                const userStats = {};
+
+                data.forEach(report => {
+                    const userId = report.user_id;
+                    const userName = report.profiles ? report.profiles.name : 'Tanpa Nama';
+                    
+                    if (!userStats[userId]) {
+                        userStats[userId] = {
+                            name: userName,
+                            totalAyat: 0,
+                            uniqueSurahs: new Set() // Menggunakan Set agar surat yang sama tidak dihitung 2x untuk kategori "Surat Terbanyak"
+                        };
+                    }
+                    
+                    userStats[userId].totalAyat += (report.total_ayat || 0);
+                    userStats[userId].uniqueSurahs.add(report.surah_name);
+                });
+
+                // Konversi Object ke Array agar bisa di-sort
+                const leaderboard = Object.values(userStats).map(u => ({
+                    name: u.name,
+                    totalAyat: u.totalAyat,
+                    totalSurah: u.uniqueSurahs.size
+                }));
+
+                // Cari Top 3 Ayat Terbanyak
+                const topAyat = [...leaderboard].sort((a, b) => b.totalAyat - a.totalAyat).slice(0, 3);
+                
+                // Cari Top 3 Surat Terbanyak (Unik)
+                const topSurah = [...leaderboard].sort((a, b) => b.totalSurah - a.totalSurah).slice(0, 3);
+
+                // Helper untuk merender list Top 3
+                const renderTopList = (list, type) => {
+                    if (list.length === 0) return '<p class="text-xs text-gray-400 italic">Belum ada data</p>';
+                    return list.map((item, index) => {
+                        const medal = index === 0 ? '🥇' : (index === 1 ? '🥈' : '🥉');
+                        const count = type === 'ayat' ? item.totalAyat : item.totalSurah;
+                        const label = type === 'ayat' ? 'Ayat' : 'Surat';
+                        const colorClass = index === 0 ? 'text-yellow-600' : (index === 1 ? 'text-gray-600' : 'text-orange-700');
+                        
+                        return `
+                        <div class="flex justify-between items-center py-1 border-b last:border-0 border-gray-100">
+                            <div class="flex items-center">
+                                <span class="mr-2 text-lg">${medal}</span>
+                                <span class="text-sm font-semibold text-gray-700 truncate max-w-[120px]">${item.name}</span>
+                            </div>
+                            <span class="text-sm font-bold ${colorClass}">${count} ${label}</span>
+                        </div>`;
+                    }).join('');
+                };
+
+                // 4. Render HTML List Laporan (Data Mentah)
+                let reportCardsHTML = data.length > 0 ? data.map(report => `
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-md font-bold text-green-700">${report.surah_name}</h3>
+                                <p class="text-sm text-gray-600 font-medium">${report.profiles ? report.profiles.name : 'Nama Tidak Ditemukan'}</p>
+                            </div>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold">
+                                ${report.total_ayat} Ayat
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            ${new Date(report.created_at).toLocaleString('id-ID')}
+                        </p>
+                    </div>`).join('') 
+                    : `<div class="p-4 text-center text-gray-500 bg-gray-50 rounded-lg">Belum ada laporan pada periode ini.</div>`;
+
+                // 5. Render Full HTML
+                adminContent.innerHTML = `
+                    <button id="admin-back-button" class="text-green-600 mb-4 font-medium flex items-center hover:text-green-800 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        Kembali ke Panel Admin
+                    </button>
+                    
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Laporan Hafalan</h2>
+
+                    <!-- FILTER DATE SECTION -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+                        <p class="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Filter Tanggal</p>
+                        <div class="flex flex-col sm:flex-row gap-3 items-end">
+                            <div class="w-full">
+                                <label class="text-xs text-gray-500">Dari</label>
+                                <input type="date" id="filter-start-date" value="${startDate}" class="w-full px-3 py-2 border rounded-md text-sm">
+                            </div>
+                            <div class="w-full">
+                                <label class="text-xs text-gray-500">Sampai</label>
+                                <input type="date" id="filter-end-date" value="${endDate}" class="w-full px-3 py-2 border rounded-md text-sm">
+                            </div>
+                            <button id="apply-filter-btn" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-green-700 transition">
+                                Terapkan
+                            </button>
+                            ${(startDate || endDate) ? `<button id="reset-filter-btn" class="w-full sm:w-auto bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-bold hover:bg-gray-300 transition">Reset</button>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- SUMMARY CARDS -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-purple-50 p-4 rounded-lg border border-purple-100 text-center">
+                            <p class="text-xs font-bold text-purple-600 uppercase">Total Surat (Unik)</p>
+                            <p class="text-2xl font-bold text-purple-800">${uniqueSurahNamesGlobal.size}</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg border border-purple-100 text-center">
+                            <p class="text-xs font-bold text-purple-600 uppercase">Total Ayat</p>
+                            <p class="text-2xl font-bold text-purple-800">${totalAyatGlobal}</p>
+                        </div>
+                    </div>
+
+                    <!-- TOP 3 SECTION -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="bg-yellow-100 text-yellow-800 p-1 rounded mr-2 text-sm">🏆</span>
+                            Top 3 Pejuang Hafalan
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Top Ayat -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                                <p class="text-xs font-bold text-gray-500 mb-3 border-b pb-2 uppercase">Paling Banyak Ayat</p>
+                                <div class="space-y-2">
+                                    ${renderTopList(topAyat, 'ayat')}
+                                </div>
+                            </div>
+                            
+                            <!-- Top Surat -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                                <p class="text-xs font-bold text-gray-500 mb-3 border-b pb-2 uppercase">Paling Banyak Surat</p>
+                                <div class="space-y-2">
+                                    ${renderTopList(topSurah, 'surat')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- REPORT LIST -->
+                    <h3 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wide">Riwayat Laporan Terbaru</h3>
+                    <div class="space-y-3">
+                        ${reportCardsHTML}
+                    </div>`;
+
+                // Event Listeners
                 document.getElementById('admin-back-button').addEventListener('click', showAdminEventList);
-            } catch (err) { console.error("Error fetching admin reports:", err); adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat laporan. Pastikan RLS Admin diaktifkan.</p>'; }
+                
+                document.getElementById('apply-filter-btn').addEventListener('click', () => {
+                    const start = document.getElementById('filter-start-date').value;
+                    const end = document.getElementById('filter-end-date').value;
+                    showAdminReportList(start, end);
+                });
+
+                if (document.getElementById('reset-filter-btn')) {
+                    document.getElementById('reset-filter-btn').addEventListener('click', () => {
+                        showAdminReportList(); // Panggil tanpa parameter untuk reset
+                    });
+                }
+
+            } catch (err) {
+                console.error("Error fetching admin reports:", err);
+                adminContent.innerHTML = '<p class="text-center text-red-500">Gagal memuat laporan.</p>';
+            }
         }
 
         async function handleCheckIn(registrationId, button) {
@@ -1604,8 +1797,6 @@
                 setButtonLoading(btn, false, 'Update User');
             }
         }
-
-
 
     </script>
 </body>
