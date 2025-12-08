@@ -19,6 +19,8 @@
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Tambahkan Library Supabase versi UMD (Lebih Stabil) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* Terapkan font default */
         body {
@@ -269,8 +271,7 @@
     <!-- SCRIPT UTAMA APLIKASI -->
     <script type="module">
         import QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm';
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
+       
         // --- Konfigurasi URL Laporan Eksternal ---
         // GANTI URL DI BAWAH INI SESUAI KEINGINAN ANDA
         const EXTERNAL_REPORT_URL = 'https://ryumedia.github.io/laporanhaqi/'; 
@@ -279,7 +280,8 @@
         const SUPABASE_URL = 'https://qupxxrvpeuvfmmgrmxsa.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1cHh4cnZwZXV2Zm1tZ3JteHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNDE1OTUsImV4cCI6MjA3NzcxNzU5NX0.Qt2zjBin5hh2_3BNRZ0x3iPBMp01M1ZgtTaFdt08yFw';
         
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 
         let userProfile = null;
 
@@ -1797,6 +1799,8 @@
                 setButtonLoading(btn, false, 'Update User');
             }
         }
+
+
 
     </script>
 </body>
